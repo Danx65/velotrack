@@ -422,12 +422,6 @@ export default function CriarServico() {
     );
   }
 
-  // Lista de Abas Simplificada de Alto Desempenho para Velotrack
-  const TABS = [
-    { id: 'geral', label: '📋 Dados Essenciais', icon: 'document-text-outline' },
-    { id: 'avancado', label: '⚙️ Opcionais & Avançado', icon: 'options-outline' },
-  ];
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <Header
@@ -435,42 +429,13 @@ export default function CriarServico() {
         onBack={() => router.back()}
       />
 
-      {/* Seletor de Abas Horizontal - Reduzido e Direto */}
-      <View style={styles.tabContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContent}
-        >
-          {TABS.map((t) => {
-            const active = activeTab === t.id;
-            return (
-              <TouchableOpacity
-                key={t.id}
-                style={[styles.tabButton, active && styles.tabButtonActive]}
-                onPress={() => setActiveTab(t.id)}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={t.icon}
-                  size={16}
-                  color={active ? colors.text : colors.textMuted}
-                />
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ================= ABA 1: DADOS ESSENCIAIS ================= */}
-        {activeTab === 'geral' && (
-          <View>
+        {/* ============ FORMULÁRIO COMPLETO (UMA ÚNICA PÁGINA) ============ */}
+        <View>
             {/* Identificação do Cliente, Local & Veículo (Cartão Unificado Inteligente) */}
             <Card>
               <CardSection label="Identificação do Cliente, Georreferenciamento & Veículo">
@@ -819,59 +784,10 @@ export default function CriarServico() {
               </CardSection>
             </Card>
           </View>
-        )}
 
-        {/* ================= ABA 2: OPCOES E CONFIGURACOES AVANCADAS ================= */}
-        {activeTab === 'avancado' && (
-          <View>
-            {/* Equipamentos Associados */}
-            <Card>
-              <CardSection label="Equipamentos & Sensores Associados">
-                <Text style={styles.sectionSubtitle}>
-                  Associe chip, rastreador ou acessórios que serão instalados ou mantidos na viatura do cliente.
-                </Text>
-
-                <View style={styles.searchEquipmentBar}>
-                  <Ionicons name="search" size={16} color={colors.textMuted} />
-                  <Text style={styles.searchBarText}>Buscar equipamento por nome ou identificador...</Text>
-                </View>
-
-                {DEF_EQUIPAMENTOS.map((eq) => {
-                  const isSelected = form.equipments.includes(eq.id);
-                  return (
-                    <TouchableOpacity
-                      key={eq.id}
-                      style={[styles.eqItem, isSelected && styles.eqItemActive]}
-                      onPress={() => toggleEquipment(eq.id)}
-                      activeOpacity={0.8}
-                    >
-                      <View style={styles.eqLeft}>
-                        <View style={[styles.eqIconBox, isSelected && styles.eqIconBoxActive]}>
-                          <Ionicons
-                            name="hardware-chip-outline"
-                            size={18}
-                            color={isSelected ? colors.primary : colors.textMuted}
-                          />
-                        </View>
-                        <View>
-                          <Text style={styles.eqName}>{eq.name}</Text>
-                          <Text style={styles.eqSerial}>S/N: {eq.serial}</Text>
-                        </View>
-                      </View>
-                      <Ionicons
-                        name={isSelected ? "checkbox" : "square-outline"}
-                        size={22}
-                        color={isSelected ? colors.primary : colors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </CardSection>
-            </Card>
-
-            {/* Upload de Anexos */}
-            <Card>
-              <CardSection label="Anexar Fotos e Credenciais (Anexos)">
+        {/* Anexar Fotos e Credenciais (Anexos) */}
+        <Card>
+          <CardSection label="Anexar Fotos e Credenciais (Anexos)">
                 <TouchableOpacity
                   style={styles.uploadZone}
                   onPress={handleAttachFile}
@@ -911,154 +827,6 @@ export default function CriarServico() {
                 ))}
               </CardSection>
             </Card>
-
-            {/* Padrao de Repeticao Recorrente */}
-            <Card>
-              <CardSection label="Padrão de Agenda Recorrente (Repetições)">
-                <Text style={styles.sectionSubtitle}>
-                  Programe a criação automática automática desta agenda periodicamente para manutenção ou auditoria de equipamentos.
-                </Text>
-
-                {REPETECOS.map((rep) => {
-                  const isSelected = form.repType === rep;
-                  return (
-                    <TouchableOpacity
-                      key={rep}
-                      style={[styles.repOption, isSelected && styles.repOptionSelected]}
-                      onPress={() => updateForm('repType', rep)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name={isSelected ? "checkmark-circle" : "ellipse-outline"}
-                        size={20}
-                        color={isSelected ? colors.primary : colors.textMuted}
-                      />
-                      <Text style={[styles.repOptionText, isSelected && styles.repOptionTextActive]}>
-                        {rep}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                {form.repType === 'Semanal' && (
-                  <View style={styles.weekContainer}>
-                    <Text style={styles.inputTitle}>Dias da Semana para Agendamento</Text>
-                    <View style={styles.daysRow}>
-                      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => {
-                        const active = form.repDays.includes(day);
-                        return (
-                          <TouchableOpacity
-                            key={day}
-                            style={[styles.dayCircle, active && styles.dayCircleActive]}
-                            onPress={() => toggleDay(day)}
-                            activeOpacity={0.8}
-                          >
-                            <Text style={[styles.dayCircleText, active && styles.dayCircleTextActive]}>
-                              {day[0]}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                )}
-              </CardSection>
-            </Card>
-
-            {/* Reguas de Notificacao & Check-in */}
-            <Card>
-              <CardSection label="Notificações Automáticas & Configurações de Check-in">
-                <Text style={styles.sectionSubtitle}>
-                  Defina as regras de alerta por WhatsApp, SMS ou PUSH ao despachar a Ordem de Serviço.
-                </Text>
-
-                <View style={styles.switchRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.switchLabel}>Pesquisa de Satisfação de Conclusão</Text>
-                    <Text style={styles.switchSub}>Coleta feedback eletrônico após o encerramento do serviço</Text>
-                  </View>
-                  <Switch
-                    value={form.satisfactionSurvey}
-                    onValueChange={(v) => updateForm('satisfactionSurvey', v)}
-                    trackColor={{ false: '#2A2E4B', true: colors.primary }}
-                    thumbColor={colors.text}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.switchLabel}>Disparo Imediato via WhatsApp (PDF)</Text>
-                    <Text style={styles.switchSub}>Envia o relatório fotográfico do serviço direto ao proprietário</Text>
-                  </View>
-                  <Switch
-                    value={form.whatsappOS}
-                    onValueChange={(v) => updateForm('whatsappOS', v)}
-                    trackColor={{ false: '#2A2E4B', true: colors.primary }}
-                    thumbColor={colors.text}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.switchLabel}>Alerta de Agendamento (Proprietário)</Text>
-                    <Text style={styles.switchSub}>Dispara link com data e hora prevista pelo WhatsApp</Text>
-                  </View>
-                  <Switch
-                    value={form.notifAgendamento}
-                    onValueChange={(v) => updateForm('notifAgendamento', v)}
-                    trackColor={{ false: '#2A2E4B', true: colors.primary }}
-                    thumbColor={colors.text}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.switchLabel}>Alerta de Conclusão do Serviço</Text>
-                    <Text style={styles.switchSub}>Avisa no WhatsApp do cliente assim que o técnico encerrar</Text>
-                  </View>
-                  <Switch
-                    value={form.notifConclusao}
-                    onValueChange={(v) => updateForm('notifConclusao', v)}
-                    trackColor={{ false: '#2A2E4B', true: colors.primary }}
-                    thumbColor={colors.text}
-                  />
-                </View>
-
-                <View style={styles.switchRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.switchLabel}>Notificação Push para o Técnico</Text>
-                    <Text style={styles.switchSub}>Alerta na tela do celular do instalador vinculado</Text>
-                  </View>
-                  <Switch
-                    value={form.notifPush}
-                    onValueChange={(v) => updateForm('notifPush', v)}
-                    trackColor={{ false: '#2A2E4B', true: colors.primary }}
-                    thumbColor={colors.text}
-                  />
-                </View>
-
-                <View style={[styles.formRow, { marginTop: spacing.md }]}>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <Input
-                      label="Código Externo (Integração)"
-                      placeholder="Ex: ERP-40919"
-                      value={form.externalCode}
-                      onChangeText={(v) => updateForm('externalCode', v)}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Input
-                      label="Marcador / Palavra-chave"
-                      placeholder="Ex: URGENTE-FROTAS"
-                      value={form.keyword}
-                      onChangeText={(v) => updateForm('keyword', v)}
-                    />
-                  </View>
-                </View>
-              </CardSection>
-            </Card>
-          </View>
-        )}
 
         {errorMsg && (
           <View style={styles.errorBox}>
