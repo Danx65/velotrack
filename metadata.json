@@ -1,0 +1,6 @@
+{
+  "name": "Velotrack",
+  "description": "Sistema de gestão de ordens de serviço e operações de manutenção de frotas e rastreadores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "VELOTRACK",
+  "short_name": "VELOTRACK",
+  "description": "Gestão Técnica de Oficina Mecânica",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#06060C",
+  "background_color": "#06060C",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": true,
+  "related_applications": [],
+  "icons": []
+}
