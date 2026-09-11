@@ -140,10 +140,10 @@ export const dashboardService = {
             created_at: s.created_at || now.toISOString(),
             tempo_fim: s.tempo_fim,
             is_test: s.is_test || false,
-            valor_servico: s.valor_servico || meta.billing?.valServico || '0,00',
-            status_pagamento: s.status_pagamento || (meta.billing?.isPago ? 'pago' : 'pendente'),
-            forma_pagamento: s.forma_pagamento || meta.billing?.formaPagamento || 'Pix',
-            data_pagamento: s.data_pagamento || null
+            valor_servico: meta.billing?.valServico || '0,00',
+            status_pagamento: meta.billing?.isPago ? 'pago' : 'pendente',
+            forma_pagamento: meta.billing?.formaPagamento || 'Pix',
+            data_pagamento: null
           };
         });
     } catch (err) {

@@ -155,13 +155,13 @@ function normalizeName(name) {
   const pascal = str.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
   if (LucideIcons[pascal]) return pascal;
 
-  return 'HelpCircle';
+  return 'CircleHelp';
 }
 
 function createVectorIconComponent() {
   const IconComponent = React.forwardRef(({ name, size = 20, color = 'currentColor', style, ...rest }, ref) => {
     const lucideName = normalizeName(name);
-    const Component = LucideIcons[lucideName] || LucideIcons.HelpCircle || LucideIcons.Circle;
+    const Component = LucideIcons[lucideName] || LucideIcons.CircleHelp || LucideIcons.Circle;
 
     const computedStyle = {
       display: 'inline-flex',

@@ -323,7 +323,7 @@ const getStyles = (colors) => StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: radii.xs,
+    borderRadius: radii.sm,
   },
   tagSuccess: {
     backgroundColor: 'rgba(16,185,129,0.1)',

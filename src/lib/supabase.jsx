@@ -79,6 +79,7 @@ const safeFetch = async (input, init) => {
 
   // If placeholder or not configured properly
   if (!config.isConfigured || urlStr.includes('placeholder.supabase.co') || urlStr.includes('seu-projeto.supabase.co')) {
+    console.error('[VELOTRACK] Supabase não configurado no ambiente. Retornando resposta vazia (modo stubs). Alvo:', urlStr);
     if (urlStr.includes('/auth/v1/')) {
       return new Response(JSON.stringify({ data: null, error: { message: 'Configuração do Supabase pendente' }, session: null }), {
         status: 200,
@@ -100,7 +101,7 @@ const safeFetch = async (input, init) => {
   try {
     return await fetch(input, init);
   } catch (err) {
-    console.warn('Network error intercepted during Supabase request:', err?.message || err);
+    console.error('[VELOTRACK] Falha de conexão com o backend Supabase. Retornando resposta vazia (modo stubs).', err?.message || err);
     if (urlStr.includes('/auth/v1/')) {
       return new Response(JSON.stringify({ data: null, error: { message: err?.message || 'Falha de conexão com o Supabase' }, session: null }), {
         status: 200,

@@ -29,6 +29,7 @@ export default function TecnicoHistorico() {
   const [status, setStatus] = useState(null);
 
   const fetchHistorico = useCallback(async () => {
+    if (!user?.id) return;
     try {
       const { data, error } = await supabase
         .from('servicos')

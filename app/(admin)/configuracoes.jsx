@@ -34,16 +34,20 @@ export default function ConfigsScreen() {
   const [targetGoal, setTargetGoal] = useState('100');
   const [loadingGoal, setLoadingGoal] = useState(true);
   const [savingGoal, setSavingGoal] = useState(false);
+  const [metaId, setMetaId] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
         const { data } = await supabase
           .from('configuracoes')
-          .select('meta_mensal')
+          .select('id, meta_mensal')
           .maybeSingle();
-        if (data && typeof data.meta_mensal === 'number') {
-          setTargetGoal(String(data.meta_mensal));
+        if (data) {
+          setMetaId(data.id);
+          if (typeof data.meta_mensal === 'number') {
+            setTargetGoal(String(data.meta_mensal));
+          }
         }
       } catch {
       } finally {
@@ -55,9 +59,20 @@ export default function ConfigsScreen() {
   const handleSaveGoal = async () => {
     setSavingGoal(true);
     try {
-      await supabase
-        .from('configuracoes')
-        .upsert({ id: 'fc6cabe0-9584-4252-80c5-2fe339b477d6', meta_mensal: parseInt(targetGoal, 10) || 100 }, { onConflict: 'id' });
+      const meta = parseInt(targetGoal, 10) || 100;
+      if (metaId) {
+        await supabase
+          .from('configuracoes')
+          .update({ meta_mensal: meta })
+          .eq('id', metaId);
+      } else {
+        const { data: inserted } = await supabase
+          .from('configuracoes')
+          .insert({ meta_mensal: meta })
+          .select('id')
+          .single();
+        setMetaId(inserted?.id || null);
+      }
       alert('Sucesso', 'Meta de OS do mês salva com sucesso!');
     } catch (err) {
       alert('Erro', err.message || 'Falha ao salvar a meta.');

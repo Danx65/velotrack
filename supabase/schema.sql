@@ -173,27 +173,51 @@ BEGIN
 END $$;
 
 -- ============================================
--- PASSO 7: Criar políticas de segurança (sem recursão!)
+-- PASSO 6.5: Função helper is_admin (SECURITY DEFINER evita recursão de RLS)
+-- ============================================
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'administrador') AND active = true
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
+-- ============================================
+-- PASSO 7: Criar políticas de segurança
 -- ============================================
 
--- Tabela users: todos os usuários autenticados podem ler/escrever
+-- Tabela users: todos os usuários autenticados podem ler; apenas admin ou o próprio usuário escrevem
 CREATE POLICY "users_select" ON public.users FOR SELECT TO authenticated USING (true);
 CREATE POLICY "users_insert" ON public.users FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "users_update" ON public.users FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "users_update" ON public.users FOR UPDATE TO authenticated
+  USING (id = auth.uid() OR public.is_admin());
 
--- Tabela servicos: todos autenticados podem ler, inserir, atualizar e deletar
+-- Tabela servicos: todos autenticados podem ler e inserir;
+-- atualização apenas por admin ou pelo técnico responsável; exclusão apenas por admin
 CREATE POLICY "servicos_select" ON public.servicos FOR SELECT TO authenticated USING (true);
 CREATE POLICY "servicos_insert" ON public.servicos FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "servicos_update" ON public.servicos FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "servicos_delete" ON public.servicos FOR DELETE TO authenticated USING (true);
+CREATE POLICY "servicos_update" ON public.servicos FOR UPDATE TO authenticated
+  USING (public.is_admin() OR technician_id = auth.uid());
+CREATE POLICY "servicos_delete" ON public.servicos FOR DELETE TO authenticated
+  USING (public.is_admin());
 
--- Tabela mensagens: todos autenticados podem ler e enviar
-CREATE POLICY "mensagens_select" ON public.mensagens_de_suporte FOR SELECT TO authenticated USING (true);
+-- Tabela mensagens: usuário vê as próprias; admin vê todas; qualquer autenticado pode enviar
+CREATE POLICY "mensagens_select" ON public.mensagens_de_suporte FOR SELECT TO authenticated
+  USING (user_id = auth.uid() OR public.is_admin());
 CREATE POLICY "mensagens_insert" ON public.mensagens_de_suporte FOR INSERT TO authenticated WITH CHECK (true);
 
--- Tabela configuracoes: todos autenticados podem ler e atualizar
+-- Tabela configuracoes: todos autenticados podem ler; apenas admin pode atualizar/inserir
 CREATE POLICY "config_select" ON public.configuracoes FOR SELECT TO authenticated USING (true);
-CREATE POLICY "config_update" ON public.configuracoes FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "config_update" ON public.configuracoes FOR UPDATE TO authenticated USING (public.is_admin());
+CREATE POLICY "config_insert" ON public.configuracoes FOR INSERT TO authenticated WITH CHECK (public.is_admin());
 
 -- ============================================
 -- PASSO 7b: Políticas de segurança para service_history
@@ -202,9 +226,7 @@ CREATE POLICY "config_update" ON public.configuracoes FOR UPDATE TO authenticate
 -- Admin pode ver todo histórico
 CREATE POLICY "history_admin_select" ON public.service_history
   FOR SELECT TO authenticated
-  USING (
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-  );
+  USING (public.is_admin());
 
 -- Técnico pode ver histórico apenas das suas próprias OS
 CREATE POLICY "history_tecnico_select" ON public.service_history

@@ -127,7 +127,7 @@ export default function AdminLayout() {
                   {profile?.nome || 'Administrador'}
                 </Text>
                 <Text style={styles.profileRole} numberOfLines={1}>
-                  {profile?.cargo || 'Admin'}
+                  {profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
                 </Text>
               </View>
             </View>

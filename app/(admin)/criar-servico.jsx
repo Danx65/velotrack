@@ -72,6 +72,8 @@ export default function CriarServico() {
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientAddress, setNewClientAddress] = useState('');
   const [newClientCity, setNewClientCity] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newClientSegmento, setNewClientSegmento] = useState('');
 
   // Form State containing all fields shown in the video list
   const [form, setForm] = useState({
@@ -121,6 +123,10 @@ export default function CriarServico() {
     notifAgendamento: true,
     notifConclusao: true,
     notifPush: true,
+
+    // Cliente (modal) extras
+    clienteEmail: '',
+    segmento: '',
   });
 
   const updateForm = (key, value) => {
@@ -215,6 +221,8 @@ export default function CriarServico() {
       endereco: newClientAddress,
       telefone: newClientPhone,
       cidade: newClientCity,
+      clienteEmail: newClientEmail,
+      segmento: newClientSegmento,
     }));
     setShowClientModal(false);
     alert('Sucesso', `Cliente "${newClientName}" selecionado e integrado à OS!`);
@@ -336,6 +344,8 @@ export default function CriarServico() {
       notifAgendamento: form.notifAgendamento,
       notifConclusao: form.notifConclusao,
       notifPush: form.notifPush,
+      clienteEmail: form.clienteEmail,
+      segmento: form.segmento,
     };
 
     const payload = {
@@ -394,6 +404,8 @@ export default function CriarServico() {
         notifAgendamento: true,
         notifConclusao: true,
         notifPush: true,
+        clienteEmail: '',
+        segmento: '',
       });
       setActiveTab('geral');
       setErrorMsg(null);
@@ -887,6 +899,8 @@ export default function CriarServico() {
                 label="E-mail de Contato"
                 placeholder="email@empresa.com"
                 keyboardType="email-address"
+                value={newClientEmail}
+                onChangeText={setNewClientEmail}
               />
 
               <View style={styles.formRow}>
@@ -903,6 +917,8 @@ export default function CriarServico() {
                   <Input
                     label="Segmento"
                     placeholder="Logística / Frotas"
+                    value={newClientSegmento}
+                    onChangeText={setNewClientSegmento}
                   />
                 </View>
               </View>

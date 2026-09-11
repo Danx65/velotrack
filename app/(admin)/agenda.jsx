@@ -548,7 +548,7 @@ export default function CalendarScreen() {
                             <View style={styles.timelineTechRow}>
                               <View style={[styles.techDotAvatar, { backgroundColor: colors.primarySoft, borderColor: 'rgba(230,0,80,0.15)' }]}>
                                 <Text style={[styles.techAvatarText, { color: colors.primary }]}>
-                                  {s.users?.nome?.substr(0, 2).toUpperCase() || 'UN'}
+                                  {s.users?.nome?.substring(0, 2).toUpperCase() || 'UN'}
                                 </Text>
                               </View>
                               <Text style={[styles.timelineTechName, { color: colors.textMuted }]}>
@@ -693,7 +693,7 @@ export default function CalendarScreen() {
       {/* Main Viewport panel */}
       {loading ? (
         <View style={styles.loaderArea}>
-          <ActivityIndicator size="large" color="#635BFF" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Sincronizando banco de dados operacionais em tempo real...</Text>
         </View>
       ) : (

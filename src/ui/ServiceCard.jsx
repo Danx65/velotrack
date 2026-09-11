@@ -39,7 +39,7 @@ function ServiceCard({ service, onPress, compact = false }) {
   // Select micro colors for action tags
   const getTipoColors = (tipo) => {
     const t = (tipo || '').toLowerCase();
-    const isDarkTheme = colors.text === '#FFFFFF';
+    const isDarkTheme = colors.isDark;
     if (t.includes('instala')) return { bg: colors.primarySoft, text: colors.primary, border: 'rgba(230,0,80,0.15)' };
     if (t.includes('manuten')) return { bg: colors.warningSoft, text: colors.warning, border: 'rgba(245,158,11,0.15)' };
     if (t.includes('retira')) return { bg: colors.errorSoft, text: colors.error, border: 'rgba(239,68,68,0.15)' };
@@ -53,9 +53,9 @@ function ServiceCard({ service, onPress, compact = false }) {
   const tipoColorSet = getTipoColors(service.tipo);
   const durationStr = isConcluido ? formatDuration(service.tempo_inicio, service.tempo_fim) : null;
 
-  const valServico = service.valor_servico || service.metadata?.billing?.valServico;
-  const formaPagamento = service.forma_pagamento || service.metadata?.billing?.formaPagamento || 'Pix';
-  const isPago = service.status_pagamento === 'pago' || service.metadata?.billing?.isPago;
+  const valServico = service.metadata?.billing?.valServico;
+  const formaPagamento = service.metadata?.billing?.formaPagamento || 'Pix';
+  const isPago = service.metadata?.billing?.isPago;
 
   return (
     <TouchableOpacity

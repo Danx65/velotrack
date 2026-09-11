@@ -61,7 +61,7 @@ export default function BarChart({ data = [], title, height = 160 }) {
                       backgroundColor: item.color || colors.primary,
                       height: anim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: ['0%', `${percentage}%`]
+                        outputRange: [0, percentage]
                       })
                     }
                   ]}

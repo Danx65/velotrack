@@ -32,6 +32,7 @@ export default function TecnicoHome() {
   const [counts, setCounts] = useState({ pendente: 0, em_andamento: 0, concluido: 0 });
 
   const fetchServices = useCallback(async () => {
+    if (!user?.id) return;
     try {
       const { data, error } = await supabase
         .from('servicos')

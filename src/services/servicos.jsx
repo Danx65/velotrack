@@ -517,9 +517,9 @@ export const servicosService = {
     const { error } = await supabase
       .from('servicos')
       .update({
+        ...data,
         status: 'concluido',
         tempo_fim: new Date().toISOString(),
-        ...data,
       })
       .eq('id', id);
     if (error) throw error;

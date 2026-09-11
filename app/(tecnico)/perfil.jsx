@@ -34,16 +34,18 @@ export default function TecnicoPerfil() {
   const { profile, signOut, isDark, toggleTheme } = useAuth();
   const [loading, setLoading] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchStats = useCallback(async () => {
     if (!profile?.id) return;
     setLoading(true);
     try {
-      const res = await servicosService.list({
-        technicianId: profile.id,
-        status: 'concluido'
-      });
-      setCompletedCount(res.count || 0);
+      const [concluidos, total] = await Promise.all([
+        servicosService.list({ technicianId: profile.id, status: 'concluido' }),
+        servicosService.list({ technicianId: profile.id }),
+      ]);
+      setCompletedCount(concluidos.count || 0);
+      setTotalCount(total.count || 0);
     } catch {
     } finally {
       setLoading(false);
@@ -99,8 +101,14 @@ export default function TecnicoPerfil() {
 
           <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={styles.statLabel}>TAXA DE SUCESSO</Text>
-            <Text style={[styles.statValue, { color: colors.success }]}>100%</Text>
-            <Text style={styles.statSub}>Feedback excelente</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color={colors.success} style={{ marginTop: 8 }} />
+            ) : (
+              <Text style={[styles.statValue, { color: colors.success }]}>
+                {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+              </Text>
+            )}
+            <Text style={styles.statSub}>OS concluídas sobre o total</Text>
           </View>
         </View>
 
