@@ -36,6 +36,11 @@ const TIPOS_TAREFA = [
 const REPETECOS = ['Não se repete', 'Diário', 'Semanal', 'Mensal'];
 const FORMAS_PAGAMENTO = ['Pix', 'Cartão de Crédito', 'Boleto Bancário', 'Dinheiro'];
 
+const nowTime = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
 const DEF_EQUIPAMENTOS = [
   { id: 'eq-1', name: 'Rastreador OBD-II (VT200)', serial: 'OBD20241022A', active: false },
   { id: 'eq-2', name: 'Rastreador GPS Wired (VT400)', serial: 'GPS400-8831B', active: false },
@@ -90,7 +95,7 @@ export default function CriarServico() {
 
     // Geral Tab extra fields
     date: new Date().toLocaleDateString('pt-BR'),
-    time: '14:00',
+    time: nowTime(),
     duration: '01:30',
     satisfactionSurvey: true,
     whatsappOS: true,
@@ -169,7 +174,7 @@ export default function CriarServico() {
 
         // Carregar campos adicionais persistidos no checklist JSON ou no campo metadata
         date: meta.schedule?.date || jsonMeta?.date || new Date().toLocaleDateString('pt-BR'),
-        time: meta.schedule?.time || jsonMeta?.time || '14:00',
+        time: meta.schedule?.time || jsonMeta?.time || nowTime(),
         duration: meta.schedule?.duration || jsonMeta?.duration || '01:30',
         satisfactionSurvey: meta.notifications?.satisfactionSurvey ?? jsonMeta?.satisfactionSurvey ?? true,
         whatsappOS: meta.notifications?.whatsappOS ?? jsonMeta?.whatsappOS ?? true,
@@ -383,7 +388,7 @@ export default function CriarServico() {
         tecnico_id: null,
         priority: 'media',
         date: new Date().toLocaleDateString('pt-BR'),
-        time: '14:00',
+        time: nowTime(),
         duration: '01:30',
         satisfactionSurvey: true,
         whatsappOS: true,
@@ -410,11 +415,7 @@ export default function CriarServico() {
       setActiveTab('geral');
       setErrorMsg(null);
 
-      if (isEditing) {
-        router.replace('/(admin)/criar-servico');
-      } else {
-        router.back();
-      }
+      router.replace('/(admin)');
     } catch (err) {
       setErrorMsg(err.message || 'Falha ao salvar serviço.');
       alert('Erro', err.message || 'Falha ao salvar serviço.');
@@ -509,28 +510,12 @@ export default function CriarServico() {
                 />
 
                 <View style={styles.formRow}>
-                  <View style={{ flex: 2, marginRight: 8 }}>
+                  <View style={{ flex: 1 }}>
                     <Input
                       label="Cidade"
                       placeholder="Ex: São Paulo"
                       value={form.cidade}
                       onChangeText={(v) => updateForm('cidade', v)}
-                    />
-                  </View>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <Input
-                      label="Latitude"
-                      placeholder="-23.550"
-                      value={form.latitude}
-                      onChangeText={(v) => updateForm('latitude', v)}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Input
-                      label="Longitude"
-                      placeholder="-46.633"
-                      value={form.longitude}
-                      onChangeText={(v) => updateForm('longitude', v)}
                     />
                   </View>
                 </View>
@@ -549,10 +534,12 @@ export default function CriarServico() {
 
                   <View style={styles.mapOverlayText}>
                     <Text style={styles.mapCoordsText}>
-                      Lat: {form.latitude} | Lng: {form.longitude}
+                      {form.cidade || form.endereco || 'Localização da OS'}
                     </Text>
                     <Text style={styles.mapStatusText}>
-                      {form.cliente ? `${form.cliente.substring(0, 22)}...` : 'Georreferenciamento Ativo'}
+                      {form.googleMapsUrl
+                        ? 'Link do Google Maps vinculado'
+                        : 'Cole um link do Google Maps para o ponto de encontro'}
                     </Text>
                   </View>
                 </View>
