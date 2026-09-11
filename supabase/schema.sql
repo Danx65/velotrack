@@ -267,5 +267,28 @@ CREATE POLICY "fotos_select" ON storage.objects FOR SELECT TO authenticated USIN
 CREATE POLICY "fotos_public" ON storage.objects FOR SELECT TO anon USING (bucket_id = 'fotos');
 
 -- ============================================
+-- PASSO 9: Credenciais provisórias de técnicos (apenas admin lê/edita)
+-- ============================================
+CREATE TABLE IF NOT EXISTS public.credenciais_tecnicos (
+  id UUID PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL DEFAULT '',
+  senha TEXT NOT NULL DEFAULT '',
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.credenciais_tecnicos ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "credenciais_select" ON public.credenciais_tecnicos;
+  DROP POLICY IF EXISTS "credenciais_insert" ON public.credenciais_tecnicos;
+  DROP POLICY IF EXISTS "credenciais_update" ON public.credenciais_tecnicos;
+END $$;
+
+CREATE POLICY "credenciais_select" ON public.credenciais_tecnicos FOR SELECT TO authenticated USING (public.is_admin());
+CREATE POLICY "credenciais_insert" ON public.credenciais_tecnicos FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+CREATE POLICY "credenciais_update" ON public.credenciais_tecnicos FOR UPDATE TO authenticated USING (public.is_admin());
+
+-- ============================================
 -- CONCLUÍDO! Banco de dados pronto.
 -- ============================================

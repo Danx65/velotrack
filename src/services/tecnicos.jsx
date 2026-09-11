@@ -37,7 +37,7 @@ export const tecnicosService = {
       });
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || 'Falha ao cadastrar técnico.');
-      return { user: data.user, needsConfirmation: false };
+      return { user: data.user, needsConfirmation: false, credentials: data.credentials || null };
     } catch (err) {
       functionError = err;
     }
@@ -62,9 +62,36 @@ export const tecnicosService = {
       }, { onConflict: 'id' });
 
       if (dbError) throw dbError;
-      return { user: authData.user, needsConfirmation: !authData.session };
+
+      try {
+        await supabase.from('credenciais_tecnicos').upsert({
+          id: authData.user.id,
+          email: email.trim(),
+          senha: password,
+        }, { onConflict: 'id' });
+      } catch {}
+
+      return {
+        user: authData.user,
+        needsConfirmation: !authData.session,
+        credentials: { email: email.trim(), password },
+      };
     } catch (fallbackErr) {
       throw functionError || fallbackErr;
+    }
+  },
+
+  credentials: async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('credenciais_tecnicos')
+        .select('email, senha')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
+    } catch {
+      return null;
     }
   },
 

@@ -31,22 +31,29 @@ function RootLayoutNav() {
     const inAdmin = segments[0] === '(admin)';
     const inTecnico = segments[0] === '(tecnico)';
 
-    const rawRole = (profile?.role || user?.user_metadata?.role || 'tecnico').toLowerCase();
+    if (!user) {
+      if (inAdmin || inTecnico) router.replace('/');
+      return;
+    }
+
+    if (!profile) return;
+
+    const rawRole = (profile.role || 'tecnico').toLowerCase();
     const isAdmin = rawRole === 'admin' || rawRole === 'administrador';
     const isTecnico = rawRole === 'tecnico' || rawRole === 'technician';
 
-    if (!user) {
-      if (inAdmin || inTecnico) router.replace('/');
-    } else if (isAdmin) {
+    if (isAdmin) {
       if (!inAdmin) router.replace('/(admin)');
     } else if (isTecnico) {
       if (!inTecnico) router.replace('/(tecnico)');
-    } else {
-      if (inAdmin || inTecnico) router.replace('/');
+    } else if (inAdmin || inTecnico) {
+      router.replace('/');
     }
   }, [user, profile, loading, segments, router]);
 
-  if (loading) {
+  const resolvingAuth = loading || (user && !profile);
+
+  if (resolvingAuth) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.bg || '#07080D' }]}>
         <ActivityIndicator size="large" color={colors.primary || '#E60050'} />

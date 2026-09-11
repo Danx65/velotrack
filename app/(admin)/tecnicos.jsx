@@ -17,7 +17,7 @@ const alert = (title, msg) => {
   else { Alert.alert(title, msg); }
 };
 
-const TecnicoItem = ({ item, onEdit, onToggle, colors, styles }) => (
+const TecnicoItem = ({ item, onEdit, onToggle, onCredentials, colors, styles }) => (
   <Card style={{ marginBottom: spacing.sm }}>
     <View style={styles.cardHead}>
       <View style={styles.cardLeft}>
@@ -47,6 +47,10 @@ const TecnicoItem = ({ item, onEdit, onToggle, colors, styles }) => (
       <TouchableOpacity style={styles.actionBtn} onPress={() => onEdit(item)} activeOpacity={0.7}>
         <Ionicons name="create-outline" size={15} color={colors.primary} />
         <Text style={[styles.actionText, { color: colors.primary }]}>Editar</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => onCredentials(item)} activeOpacity={0.7}>
+        <Ionicons name="key-outline" size={15} color={colors.primary} />
+        <Text style={[styles.actionText, { color: colors.primary }]}>Credenciais</Text>
       </TouchableOpacity>
       <TouchableOpacity style={[styles.actionBtn, { borderColor: item.active ? colors.error : colors.success }]} onPress={() => onToggle(item)} activeOpacity={0.7}>
         <Ionicons name={item.active ? 'eye-off-outline' : 'eye-outline'} size={15} color={item.active ? colors.error : colors.success} />
@@ -94,9 +98,13 @@ export default function GestaoTecnicos() {
     }
     setSubmitting(true);
     try {
-      const { needsConfirmation } = await tecnicosService.create(form);
+      const result = await tecnicosService.create(form);
       alert('Sucesso', 'Técnico cadastrado com sucesso!');
-      if (needsConfirmation) {
+      const creds = result?.credentials;
+      if (creds) {
+        alert('Login e Senha', `Guarde essas credenciais para entregar ao técnico:\n\nE-mail: ${creds.email}\nSenha: ${creds.password}`);
+      }
+      if (result?.needsConfirmation) {
         alert('Confirmação necessária', 'O técnico precisa confirmar o e-mail antes do primeiro login.');
       }
       setForm({ nome: '', telefone: '', email: '', password: '' });
@@ -135,6 +143,19 @@ export default function GestaoTecnicos() {
     }
   };
 
+  const handleShowCredentials = async (tecnico) => {
+    try {
+      const creds = await tecnicosService.credentials(tecnico.id);
+      if (creds?.senha) {
+        alert('Login e Senha', `E-mail: ${creds.email}\nSenha: ${creds.senha}`);
+      } else {
+        alert('Sem credenciais', 'Nenhuma senha registrada para este técnico. Peça redefinição de senha.');
+      }
+    } catch (error) {
+      alert('Erro', error.message || 'Não foi possível buscar as credenciais.');
+    }
+  };
+
   const renderItem = useCallback(({ item }) => (
     <TecnicoItem
       item={item}
@@ -142,6 +163,7 @@ export default function GestaoTecnicos() {
       styles={styles}
       onEdit={(tec) => { setEditingTecnico(tec); setForm({ nome: tec.nome, telefone: tec.telefone || '', email: tec.email, password: '' }); setShowForm(true); }}
       onToggle={handleToggleActive}
+      onCredentials={handleShowCredentials}
     />
   ), [colors, styles]);
 

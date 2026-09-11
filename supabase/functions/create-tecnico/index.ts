@@ -73,5 +73,25 @@ Deno.serve(async (req) => {
     return json({ error: insertError.message }, 400);
   }
 
-  return json({ ok: true, user: { id: userData.user.id, email, nome } });
+  const { error: credError } = await supabase.from('credenciais_tecnicos').upsert(
+    {
+      id: userData.user.id,
+      email,
+      senha: password,
+      criado_em: new Date().toISOString(),
+    },
+    { onConflict: 'id' }
+  );
+
+  if (credError) {
+    await supabase.auth.admin.deleteUser(userData.user.id);
+    await supabase.from('users').delete().eq('id', userData.user.id);
+    return json({ error: credError.message }, 400);
+  }
+
+  return json({
+    ok: true,
+    user: { id: userData.user.id, email, nome },
+    credentials: { email, password },
+  });
 });
