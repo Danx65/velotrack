@@ -79,7 +79,9 @@ export const servicosService = {
 
     if (search.trim()) {
       const q = search.trim();
-      query = query.or(`cliente.ilike.%${q}%,placa.ilike.%${q}%,veiculo.ilike.%${q}%,endereco.ilike.%${q}%`);
+      query = query.or(
+        `cliente.ilike.%${q}%,placa.ilike.%${q}%,veiculo.ilike.%${q}%,endereco.ilike.%${q}%,telefone.ilike.%${q}%,descricao.ilike.%${q}%`
+      );
     }
 
     if (dateFilter !== 'todas') {
@@ -563,6 +565,17 @@ export const servicosService = {
     if (error) throw error;
     clearQueryCache();
   },
+
+  deleteTestServices: async () => {
+    const { data, error } = await supabase
+      .from('servicos')
+      .delete()
+      .eq('is_test', true)
+      .select('id');
+    if (error) throw error;
+    clearQueryCache();
+    return (data || []).length;
+  },
 };
 
 export const photoService = {
@@ -581,6 +594,20 @@ export const photoService = {
     const { error } = await supabase.storage
       .from('fotos')
       .upload(fileName, decode(base64), { contentType: 'image/jpeg' });
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from('fotos').getPublicUrl(fileName);
+    return urlData.publicUrl;
+  },
+
+  uploadDataUrl: async (dataUrl) => {
+    const match = String(dataUrl || '').match(/^data:([^;,]+)[;,]base64,(.*)$/s);
+    if (!match) throw new Error('Arquivo inválido.');
+    const contentType = match[1];
+    const ext = (contentType.split('/')[1] || 'bin').replace('jpeg', 'jpg');
+    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage
+      .from('fotos')
+      .upload(fileName, decode(match[2]), { contentType });
     if (error) throw error;
     const { data: urlData } = supabase.storage.from('fotos').getPublicUrl(fileName);
     return urlData.publicUrl;

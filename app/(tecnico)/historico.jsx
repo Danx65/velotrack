@@ -96,6 +96,8 @@ export default function TecnicoHistorico() {
       service={item}
       onPress={() => router.push(`/(tecnico)/servico/${item.id}`)}
       compact
+      hideBilling
+      showPhone
     />
   ), []);
 

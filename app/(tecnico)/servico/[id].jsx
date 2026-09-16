@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Platform, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { typography, radii, spacing } from '../../../src/theme/colors';
@@ -61,6 +62,7 @@ export default function ServiceDetail() {
   const [observations, setObservations] = useState('');
   const [photos, setPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchService = useCallback(async () => {
     try {
@@ -71,10 +73,57 @@ export default function ServiceDetail() {
       if (data.checklist && data.checklist.length > 0) setChecklist(data.checklist);
     } catch {} finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [id]);
 
   useFocusEffect(useCallback(() => { fetchService(); }, [fetchService]));
+
+  const handleCall = () => {
+    const digits = (service?.telefone || '').replace(/[^\d]/g, '');
+    if (!digits) return;
+    const url = `tel:+${digits}`;
+    if (Platform.OS === 'web') window.location.href = url;
+    else Linking.openURL(url);
+  };
+
+  const STATUS_LABEL = {
+    pendente: 'Pendente',
+    em_andamento: 'Em andamento',
+    concluido: 'Concluído',
+  };
+
+  const buildWhatsAppMessage = () => {
+    const lines = [
+      'Olá! Aqui é da Velotrack.',
+      service?.cliente ? `Cliente: ${service.cliente}` : null,
+      service?.endereco ? `Endereço: ${service.endereco}` : null,
+      service?.veiculo ? `Veículo: ${service.veiculo}${service.placa ? ` (${service.placa})` : ''}` : null,
+      service?.tipo ? `Serviço: ${service.tipo}` : null,
+      service?.status ? `Status: ${STATUS_LABEL[service.status] || service.status}` : null,
+    ].filter(Boolean).join('\n');
+    return encodeURIComponent(lines);
+  };
+
+  const handleWhatsApp = () => {
+    let digits = (service?.telefone || '').replace(/[^\d]/g, '');
+    if (!digits) return;
+    if (!digits.startsWith('55')) digits = `55${digits}`;
+    const url = `https://wa.me/${digits}?text=${buildWhatsAppMessage()}`;
+    if (Platform.OS === 'web') window.open(url, '_blank');
+    else Linking.openURL(url);
+  };
+
+  const handleCopyPhone = () => {
+    const digits = (service?.telefone || '').replace(/[^\d]/g, '');
+    if (!digits) return;
+    if (Platform.OS === 'web') {
+      navigator.clipboard?.writeText(digits);
+      alert('Copiado', 'Número copiado para a área de transferência.');
+    } else {
+      alert('Telefone', service.telefone);
+    }
+  };
 
   const handleStart = async () => {
     setUpdating(true);
@@ -91,7 +140,7 @@ export default function ServiceDetail() {
       await servicosService.finishService(id, { checklist, observations, fotos: photos });
       await historyService.log(id, user?.id, historyService.ACTIONS.FINISHED, 'Serviço finalizado');
       alert('Sucesso', 'Serviço finalizado com sucesso!');
-      router.back();
+      router.replace('/(tecnico)');
     } catch { alert('Erro', 'Não foi possível finalizar o serviço.'); } finally { setUpdating(false); }
   };
 
@@ -172,11 +221,42 @@ export default function ServiceDetail() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <Header title="Ordem de Serviço" onBack={() => router.back()} />
+      <Header title="Ordem de Serviço" onBack={() => router.replace('/(tecnico)')} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={fetchService} tintColor={colors.primary} colors={[colors.primary]} />
+        }
+      >
         <ServiceInfo service={service} />
         <ServiceVehicle service={service} />
+
+        {service.telefone ? (
+          <Card>
+            <CardSection label="Contato com o Cliente">
+              <View style={styles.contactRow}>
+                <View style={styles.contactIcon}>
+                  <Ionicons name="call-outline" size={16} color={colors.primary} />
+                </View>
+                <Text style={styles.contactValue}>{service.telefone}</Text>
+                <View style={styles.contactActions}>
+                  <TouchableOpacity style={styles.contactBtn} onPress={handleWhatsApp} activeOpacity={0.7}>
+                    <Ionicons name="logo-whatsapp" size={14} color={colors.success} />
+                    <Text style={[styles.contactBtnText, { color: colors.success }]}>WhatsApp</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.contactBtn} onPress={handleCall} activeOpacity={0.7}>
+                    <Ionicons name="call" size={14} color={colors.primary} />
+                    <Text style={styles.contactBtnText}>Ligar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.contactBtn} onPress={handleCopyPhone} activeOpacity={0.7}>
+                    <Ionicons name="copy-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.contactBtnText, { color: colors.textMuted }]}>Copiar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </CardSection>
+          </Card>
+        ) : null}
 
         <Card>
           <CardSection label="Técnico e Datas">
@@ -285,6 +365,19 @@ const getStyles = (colors) => StyleSheet.create({
   },
   techRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: spacing.md },
   techName: { fontSize: 14, fontWeight: '600', color: colors.text },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  contactIcon: {
+    width: 36, height: 36, borderRadius: radii.md,
+    backgroundColor: colors.primarySoft, justifyContent: 'center', alignItems: 'center',
+  },
+  contactValue: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.text },
+  contactActions: { flexDirection: 'row', gap: 8 },
+  contactBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 8, paddingHorizontal: 10, borderRadius: radii.md,
+    backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border,
+  },
+  contactBtnText: { fontSize: 11, fontWeight: '700', color: colors.primary },
   datesGrid: { flexDirection: 'row', gap: 8 },
   dateItem: {
     flex: 1, backgroundColor: colors.card,

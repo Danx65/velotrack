@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { typography, radii, spacing, shadows } from '../../src/theme/colors';
 import { useThemeColors } from '../../src/theme';
 
-import { servicosService } from '../../src/services/servicos';
+import { servicosService, photoService } from '../../src/services/servicos';
 import { tecnicosService } from '../../src/services/tecnicos';
 import { Card, CardSection } from '../../src/ui/Card';
 import Header from '../../src/ui/Header';
@@ -323,6 +323,24 @@ export default function CriarServico() {
 
     setSubmitting(true);
 
+    // Enviar anexos em base64 para o storage antes de salvar a OS
+    let payloadAttachments = form.attachments;
+    try {
+      payloadAttachments = await Promise.all(
+        form.attachments.map(async (att) => {
+          if (att.dataUrl && !att.url) {
+            const url = await photoService.uploadDataUrl(att.dataUrl);
+            return { ...att, url, dataUrl: undefined };
+          }
+          return att;
+        })
+      );
+    } catch (e) {
+      setSubmitting(false);
+      alert('Atenção', 'Não foi possível enviar os anexos. Verifique o tamanho dos arquivos.');
+      return;
+    }
+
     const tipoFinal = form.tipo === 'Outro' ? form.tipoOutro : form.tipo;
 
     // Encapsular campos avançados integrados no payload do "checklist" JSON
@@ -339,7 +357,7 @@ export default function CriarServico() {
       latitude: form.latitude,
       longitude: form.longitude,
       equipments: form.equipments,
-      attachments: form.attachments,
+      attachments: payloadAttachments,
       repType: form.repType,
       repDays: form.repDays,
       valServico: form.valServico,

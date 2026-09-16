@@ -5,7 +5,7 @@ import { radii, spacing } from '../theme/colors';
 import { useThemeColors } from '../theme/useThemeColors';
 import { StatusBadge, PriorityBadge } from './Badge';
 
-function ServiceCard({ service, onPress, compact = false }) {
+function ServiceCard({ service, onPress, compact = false, hideBilling = false, showPhone = false }) {
   const colors = useThemeColors();
   const styles = getStyles(colors);
   if (!service) return null;
@@ -56,6 +56,7 @@ function ServiceCard({ service, onPress, compact = false }) {
   const valServico = service.metadata?.billing?.valServico;
   const formaPagamento = service.metadata?.billing?.formaPagamento || 'Pix';
   const isPago = service.metadata?.billing?.isPago;
+  const showBilling = !hideBilling && valServico && valServico !== '0,00';
 
   return (
     <TouchableOpacity
@@ -95,7 +96,7 @@ function ServiceCard({ service, onPress, compact = false }) {
         <PriorityBadge priority={service.priority} size="sm" />
       </View>
 
-      {valServico && valServico !== '0,00' ? (
+      {showBilling ? (
         <View style={styles.detailRow}>
           <Ionicons name="cash-outline" size={13} color={colors.success} />
           <Text style={[styles.detailText, { fontWeight: '700', color: colors.text }]}>
@@ -109,6 +110,13 @@ function ServiceCard({ service, onPress, compact = false }) {
               {isPago ? 'PAGO' : 'FATURAMENTO PENDENTE'}
             </Text>
           </View>
+        </View>
+      ) : null}
+
+      {showPhone && service.telefone ? (
+        <View style={styles.detailRow}>
+          <Ionicons name="call-outline" size={13} color={colors.textMuted} />
+          <Text style={styles.detailText}>{service.telefone}</Text>
         </View>
       ) : null}
 
@@ -162,8 +170,11 @@ const getStyles = (colors) => StyleSheet.create({
     shadowRadius: colors.shadowRadiusDesktop || 12,
   },
   cardAlta: {
-    borderLeftWidth: 3.5,
+    borderLeftWidth: 5,
     borderLeftColor: colors.error,
+    shadowColor: colors.error,
+    shadowOpacity: (colors.shadowOpacityDesktop || 0.05) + 0.06,
+    shadowRadius: (colors.shadowRadiusDesktop || 12) + 4,
   },
   cardConcluido: {
     borderLeftWidth: 1,

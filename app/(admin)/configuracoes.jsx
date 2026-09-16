@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
-  Alert
+  Alert,
+  TextInput,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +18,7 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { typography, radii, spacing } from '../../src/theme/colors';
 import { useThemeColors } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
+import { servicosService } from '../../src/services/servicos';
 
 import { Card, CardSection } from '../../src/ui/Card';
 import Button from '../../src/ui/Button';
@@ -35,6 +38,9 @@ export default function ConfigsScreen() {
   const [loadingGoal, setLoadingGoal] = useState(true);
   const [savingGoal, setSavingGoal] = useState(false);
   const [metaId, setMetaId] = useState(null);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -78,6 +84,21 @@ export default function ConfigsScreen() {
       alert('Erro', err.message || 'Falha ao salvar a meta.');
     } finally {
       setSavingGoal(false);
+    }
+  };
+
+  const handleDeleteTest = async () => {
+    if (confirmText.trim().toUpperCase() !== 'CONFIRMAR') return;
+    setDeleting(true);
+    try {
+      const count = await servicosService.deleteTestServices();
+      alert('Sucesso', `${count} OS de teste excluídas.`);
+      setConfirmVisible(false);
+      setConfirmText('');
+    } catch (err) {
+      alert('Erro', err.message || 'Falha ao excluir as OS de teste.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -171,6 +192,27 @@ export default function ConfigsScreen() {
           </CardSection>
         </Card>
 
+        {/* ZONA DE RISCO */}
+        <Card style={[styles.card, { borderColor: 'rgba(239,68,68,0.2)' }]}>
+          <CardSection label="Zona de Risco">
+            <View style={styles.configItem}>
+              <View style={styles.dangerTitleRow}>
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+                <Text style={[styles.dangerTitle, { color: colors.error }]}>Excluir OS de teste</Text>
+              </View>
+              <Text style={styles.configDesc}>
+                Remove permanentemente as ordens de serviço marcadas como teste (is_test). O histórico destas OS também é apagado.
+              </Text>
+              <Button
+                title="EXCLUIR OS DE TESTE"
+                onPress={() => setConfirmVisible(true)}
+                variant="danger"
+                style={{ marginTop: spacing.md }}
+              />
+            </View>
+          </CardSection>
+        </Card>
+
         {/* LOGOUT SYSTEM */}
         <Button
           title="ENCERRAR SESSÃO NO VELOTRACK"
@@ -181,6 +223,48 @@ export default function ConfigsScreen() {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
+
+      {/* Modal de confirmação de exclusão */}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={confirmVisible}
+        onRequestClose={() => setConfirmVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.error }]}>Confirmar exclusão</Text>
+            <Text style={styles.modalDesc}>
+              Esta ação excluirá todas as OS de teste de forma permanente. Digite CONFIRMAR para prosseguir.
+            </Text>
+            <TextInput
+              style={[styles.confirmInput, { backgroundColor: colors.surfaceElevated, color: colors.text, borderColor: colors.border }]}
+              value={confirmText}
+              onChangeText={setConfirmText}
+              placeholder="Digite CONFIRMAR"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <View style={styles.modalActions}>
+              <Button
+                title="CANCELAR"
+                variant="ghost"
+                onPress={() => { setConfirmVisible(false); setConfirmText(''); }}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="EXCLUIR"
+                variant="danger"
+                loading={deleting}
+                disabled={confirmText.trim().toUpperCase() !== 'CONFIRMAR'}
+                onPress={handleDeleteTest}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -325,6 +409,54 @@ const getStyles = (colors) => StyleSheet.create({
   signOutBtn: {
     marginTop: spacing.sm,
     borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  dangerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: spacing.xs,
+  },
+  dangerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  modalDesc: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  confirmInput: {
+    height: 44,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   bottomSpace: { height: 60 },
 });

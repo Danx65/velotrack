@@ -38,7 +38,6 @@ export default function TecnicoPerfil() {
 
   const fetchStats = useCallback(async () => {
     if (!profile?.id) return;
-    setLoading(true);
     try {
       const [concluidos, total] = await Promise.all([
         servicosService.list({ technicianId: profile.id, status: 'concluido' }),

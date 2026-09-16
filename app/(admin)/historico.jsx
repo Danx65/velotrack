@@ -88,7 +88,7 @@ export default function HistoricoAdmin() {
             <Ionicons name="search" size={16} color={colors.textMuted} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Cliente, placa, técnico..."
+              placeholder="Cliente, placa, telefone, veículo, endereço, descrição..."
               placeholderTextColor={colors.textMuted}
               value={search}
               onChangeText={setSearch}

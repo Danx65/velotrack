@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +29,8 @@ export default function TecnicoHome() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('ativos');
+  const [search, setSearch] = useState('');
+  const [period, setPeriod] = useState('todas');
   const [counts, setCounts] = useState({ pendente: 0, em_andamento: 0, concluido: 0 });
 
   const fetchServices = useCallback(async () => {
@@ -55,19 +57,36 @@ export default function TecnicoHome() {
 
   useFocusEffect(useCallback(() => { fetchServices(); }, [fetchServices]));
 
+  const matchesPeriod = useCallback((createdAt) => {
+    if (!createdAt || !period || period === 'todas') return true;
+    const d = new Date(createdAt);
+    const now = new Date();
+    if (period === 'hoje') return d.toDateString() === now.toDateString();
+    if (period === '7d') return (now - d) <= 7 * 24 * 60 * 60 * 1000;
+    if (period === 'mes') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  }, [period]);
+
+  const matchesSearch = useCallback((s) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    const hay = [s?.cliente, s?.placa, s?.veiculo, s?.endereco, s?.telefone, s?.tipo, s?.descricao]
+      .filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  }, [search]);
+
   const filteredServices = useMemo(() => {
-    switch (activeTab) {
-      case 'pendentes':
-        return services.filter(s => s.status === 'pendente');
-      case 'andamento':
-        return services.filter(s => s.status === 'em_andamento');
-      case 'concluidos':
-        return services.filter(s => s.status === 'concluido');
-      case 'ativos':
-      default:
-        return services.filter(s => s.status === 'pendente' || s.status === 'em_andamento');
-    }
-  }, [services, activeTab]);
+    const byTab = (s) => {
+      switch (activeTab) {
+        case 'pendentes': return s.status === 'pendente';
+        case 'andamento': return s.status === 'em_andamento';
+        case 'concluidos': return s.status === 'concluido';
+        case 'ativos':
+        default: return s.status === 'pendente' || s.status === 'em_andamento';
+      }
+    };
+    return services.filter(s => byTab(s) && matchesPeriod(s.created_at) && matchesSearch(s));
+  }, [services, activeTab, matchesPeriod, matchesSearch]);
 
   const today = useMemo(() =>
     new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }),
@@ -83,6 +102,8 @@ export default function TecnicoHome() {
     <ServiceCard
       service={item}
       onPress={() => router.push(`/(tecnico)/servico/${item.id}`)}
+      hideBilling
+      showPhone
     />
   ), []);
 
@@ -173,6 +194,47 @@ export default function TecnicoHome() {
             keyExtractor={(i) => i.key}
           />
 
+          <View style={styles.toolbar}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={15} color={colors.textMuted} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar cliente, placa, veículo..."
+                placeholderTextColor={colors.textMuted}
+                value={search}
+                onChangeText={setSearch}
+              />
+              {search ? (
+                <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <View style={styles.periodRow}>
+              {[
+                { key: 'todas', label: 'Todos' },
+                { key: 'hoje', label: 'Hoje' },
+                { key: '7d', label: '7 dias' },
+                { key: 'mes', label: 'Este mês' },
+              ].map((opt) => {
+                const isActive = period === opt.key;
+                return (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[styles.periodChip, isActive && styles.periodChipActive]}
+                    onPress={() => setPeriod(opt.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.periodChipText, isActive && styles.periodChipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
           <FlatList
             data={filteredServices}
             keyExtractor={(item) => item.id}
@@ -255,5 +317,21 @@ const getStyles = (colors) => StyleSheet.create({
   tabCountActive: { backgroundColor: colors.primary + '30' },
   tabCountText: { fontSize: 10, fontWeight: '700', color: colors.textMuted },
   tabCountTextActive: { color: colors.primary },
+  toolbar: { paddingHorizontal: spacing.xl, marginBottom: spacing.sm, gap: 8 },
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.surface, borderRadius: radii.md,
+    paddingHorizontal: spacing.md, height: 40,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  searchInput: { flex: 1, fontSize: 13, color: colors.text },
+  periodRow: { flexDirection: 'row', gap: 6 },
+  periodChip: {
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+  },
+  periodChipActive: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
+  periodChipText: { fontSize: 11, fontWeight: '600', color: colors.textSecondary },
+  periodChipTextActive: { color: colors.primary, fontWeight: '700' },
   list: { paddingHorizontal: spacing.xl, paddingBottom: 20 },
 });

@@ -89,8 +89,8 @@ export default function AdminDashboard() {
 
   useFocusEffect(
     useCallback(() => {
-      refetchStats();
-      refetchFin();
+      refetchStats({ silent: true });
+      refetchFin({ silent: true });
     }, [])
   );
 
@@ -102,6 +102,44 @@ export default function AdminDashboard() {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const exportCSV = () => {
+    if (!finStats) return;
+    if (Platform.OS !== 'web') {
+      alert('Exportar CSV', 'Disponível apenas na versão web.');
+      return;
+    }
+    const fmt = (v) => String((v ?? 0)).replace('.', ',');
+    const rows = [
+      ['Métrica', 'Valor'],
+      ['Faturamento total', fmt(finStats.receitaTotal)],
+      ['Receita mensal', fmt(finStats.receitaMensal)],
+      ['Receita semanal', fmt(finStats.receitaSemanal)],
+      ['Receita diária', fmt(finStats.receitaDiaria)],
+      ['Receita anual', fmt(finStats.receitaAnual)],
+      ['Ticket médio', fmt(finStats.ticketMedio)],
+      ['OS pagas', finStats.servicosPagos ?? 0],
+      ['OS com faturamento pendente', finStats.servicosPendentes ?? 0],
+      [],
+      ['Faturamento por técnico'],
+      ['Técnico', 'Valor'],
+      ...(finStats.receitaPorTecnico || []).map(t => [t.nome, fmt(t.valor)]),
+      [],
+      ['Faturamento por tipo de serviço'],
+      ['Tipo', 'Valor'],
+      ...(finStats.receitaPorTipo || []).map(t => [t.tipo, fmt(t.valor)]),
+    ];
+    const csv = rows
+      .map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'))
+      .join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `velotrack_financeiro_${filters.periodo}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const stats = statsData?.stats;
@@ -304,28 +342,40 @@ export default function AdminDashboard() {
 
         {/* INTERACTIVE FILTERS DRAWER */}
         <Card style={styles.filtersCard}>
-          <Pressable
-            onPress={() => setFiltersExpanded(!filtersExpanded)}
-            style={({ pressed }) => [
-              styles.filtersHeaderToggle,
-              pressed && { opacity: 0.8 }
-            ]}
-          >
-            <View style={styles.filtersHeaderTitleBox}>
-              <Ionicons name="funnel-outline" size={16} color={colors.primary} />
-              <Text style={[styles.filtersTitle, { color: colors.text }]}>Filtros Analíticos Avançados</Text>
-              {(filters.periodo !== 'todas' || filters.tecnico !== 'todos' || filters.status !== 'todos' || filters.tipo_servico !== 'todos' || filters.forma_pagamento !== 'todos') && (
-                <View style={[styles.activeFilterBadge, { backgroundColor: colors.primarySoft || 'rgba(230,0,80,0.08)' }]}>
-                  <Text style={[styles.activeFilterBadgeText, { color: colors.primary }]}>ATIVO</Text>
-                </View>
-              )}
-            </View>
-            <Ionicons 
-              name={filtersExpanded ? "chevron-up" : "chevron-down"} 
-              size={18} 
-              color={colors.textSecondary} 
-            />
-          </Pressable>
+          <View style={styles.filtersHeaderRow}>
+            <Pressable
+              onPress={() => setFiltersExpanded(!filtersExpanded)}
+              style={({ pressed }) => [
+                styles.filtersHeaderToggle,
+                pressed && { opacity: 0.8 }
+              ]}
+            >
+              <View style={styles.filtersHeaderTitleBox}>
+                <Ionicons name="funnel-outline" size={16} color={colors.primary} />
+                <Text style={[styles.filtersTitle, { color: colors.text }]}>Filtros Analíticos Avançados</Text>
+                {(filters.periodo !== 'todas' || filters.tecnico !== 'todos' || filters.status !== 'todos' || filters.tipo_servico !== 'todos' || filters.forma_pagamento !== 'todos') && (
+                  <View style={[styles.activeFilterBadge, { backgroundColor: colors.primarySoft || 'rgba(230,0,80,0.08)' }]}>
+                    <Text style={[styles.activeFilterBadgeText, { color: colors.primary }]}>ATIVO</Text>
+                  </View>
+                )}
+              </View>
+              <Ionicons
+                name={filtersExpanded ? "chevron-up" : "chevron-down"}
+                size={18}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+            <Pressable
+              onPress={exportCSV}
+              style={({ pressed }) => [
+                styles.exportBtn,
+                pressed && { opacity: 0.8 }
+              ]}
+            >
+              <Ionicons name="download-outline" size={15} color={colors.success} />
+              <Text style={[styles.exportBtnText, { color: colors.success }]}>CSV</Text>
+            </Pressable>
+          </View>
 
           {filtersExpanded && (
             <View style={[styles.filterSection, { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }]}>
@@ -594,10 +644,32 @@ export default function AdminDashboard() {
 const getStyles = (colors, isDesktop) => StyleSheet.create({
   safe: { flex: 1 },
   filtersHeaderToggle: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: spacing.lg,
+  },
+  filtersHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  exportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginRight: spacing.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.25)',
+    backgroundColor: 'rgba(16,185,129,0.08)',
+  },
+  exportBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   filtersHeaderTitleBox: {
     flexDirection: 'row',

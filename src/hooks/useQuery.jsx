@@ -70,9 +70,11 @@ export function useQuery(key, fetchFn, { enabled = true, cacheTime = 30000, deps
     return () => { cancelled = true; };
   }, [enabled, ...deps]);
 
-  const refetch = async () => {
-    setLoading(true);
-    setError(null);
+  const refetch = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     const cacheKey = JSON.stringify(key);
     cache.delete(cacheKey);
     try {
@@ -80,11 +82,11 @@ export function useQuery(key, fetchFn, { enabled = true, cacheTime = 30000, deps
       cache.set(cacheKey, { data: result, timestamp: Date.now() });
       if (mountedRef.current) {
         setData(result);
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
       return result;
     } catch (err) {
-      if (mountedRef.current) {
+      if (mountedRef.current && !silent) {
         setError(err.message || 'Erro ao recarregar');
         setLoading(false);
       }

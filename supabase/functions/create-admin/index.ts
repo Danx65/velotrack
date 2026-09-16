@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { isAdmin } from '../_shared/admin.ts';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -14,6 +15,10 @@ const json = (body: unknown, status = 200) =>
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Método não permitido' }, 405);
+
+  if (!(await isAdmin(req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')))) {
+    return json({ error: 'Acesso negado. Apenas administradores.' }, 403);
+  }
 
   let payload: { nome?: string; email?: string; password?: string };
   try {

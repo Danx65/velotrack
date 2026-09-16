@@ -16,13 +16,13 @@ export function StatusBadge({ status, size = 'sm' }) {
       bg: 'rgba(59,130,246,0.08)',
       color: '#3B82F6',
       dotColor: '#3B82F6',
-      label: 'Em rota',
+      label: 'Em andamento',
     },
     concluido: {
       bg: colors.successSoft,
       color: colors.success,
       dotColor: '#10B981',
-      label: 'Confirmado',
+      label: 'Concluído',
     },
     cancelado: {
       bg: colors.errorSoft,
