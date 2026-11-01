@@ -1,4 +1,13 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+export function ScrollViewStyleReset() {
+  return (
+    <style
+      id="expo-reset"
+      dangerouslySetInnerHTML={{
+        __html: `#root,body,html{height:100%}body{overflow:hidden}#root{display:flex}`,
+      }}
+    />
+  );
+}
 
 export default function Root({ children }) {
   return (
