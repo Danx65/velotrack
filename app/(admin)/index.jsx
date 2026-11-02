@@ -60,31 +60,31 @@ export default function AdminDashboard() {
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(
     ['dashboard-stats'],
     () => dashboardService.getStats(),
-    { cacheTime: 10000 }
+    { staleTime: 300000 }
   );
 
   const { data: meta } = useQuery(
     ['dashboard-meta'],
     () => dashboardService.getMeta(),
-    { cacheTime: 30000 }
+    { staleTime: 300000 }
   );
 
   const { data: ranking, loading: rankingLoading } = useQuery(
     ['dashboard-ranking'],
     () => dashboardService.getRanking(5),
-    { cacheTime: 15000 }
+    { staleTime: 300000 }
   );
 
   const { data: finStats, loading: finLoading, refetch: refetchFin } = useQuery(
     ['financial-stats', JSON.stringify(filters)],
     () => dashboardService.getFinancialStats(filters),
-    { cacheTime: 5000, deps: [filters] }
+    { staleTime: 300000, deps: [filters] }
   );
 
   const { data: activeTecnicos } = useQuery(
     ['active-tecnicos-list'],
     () => tecnicosService.listActive(),
-    { cacheTime: 40000 }
+    { staleTime: 300000 }
   );
 
   useFocusEffect(
@@ -444,7 +444,8 @@ export default function AdminDashboard() {
           <View style={styles.grid}>
             {[1, 2, 3, 4].map(idx => (
               <View key={idx} style={styles.statCard}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <Skeleton width={32} height={32} borderRadius={radii.sm} />
+                <Skeleton width={60} height={28} style={{ marginTop: 8 }} />
               </View>
             ))}
           </View>
@@ -547,7 +548,11 @@ export default function AdminDashboard() {
             <Card style={styles.breakoutCard}>
               <CardSection label="Faturamento por Tipo de Serviço">
                 {finLoading ? (
-                  <ActivityIndicator color={colors.primary} size="small" style={{ margin: 16 }} />
+                  <View style={{ padding: spacing.md, gap: 10 }}>
+                    <Skeleton width="70%" height={14} />
+                    <Skeleton width="55%" height={14} />
+                    <Skeleton width="62%" height={14} />
+                  </View>
                 ) : Array.isArray(finStats?.receitaPorTipo) && finStats.receitaPorTipo.length > 0 ? (
                   finStats.receitaPorTipo.map((item, idx) => (
                     <View key={idx} style={styles.progressRowContainer}>
@@ -610,7 +615,11 @@ export default function AdminDashboard() {
             <Card style={styles.rankingCard}>
               <CardSection label="Performance Comercial por Técnico">
                 {finLoading ? (
-                  <ActivityIndicator color={colors.primary} size="small" style={{ margin: 16 }} />
+                  <View style={{ padding: spacing.md, gap: 10 }}>
+                    <Skeleton width="80%" height={14} />
+                    <Skeleton width="65%" height={14} />
+                    <Skeleton width="72%" height={14} />
+                  </View>
                 ) : Array.isArray(finStats?.receitaPorTecnico) && finStats.receitaPorTecnico.length > 0 ? (
                   finStats.receitaPorTecnico.map((item, index) => (
                     <View key={index} style={styles.techPerfRow}>
