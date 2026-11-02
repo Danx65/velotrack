@@ -216,6 +216,13 @@ export const dashboardService = {
     const techMap = {};
     const typeMap = {};
 
+    const revenueMonths = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('pt-BR', { month: 'short' }).substring(0, 3).toUpperCase();
+      revenueMonths[`${d.getFullYear()}-${d.getMonth()}`] = { label, value: 0 };
+    }
+
     filteredMetrics.forEach(item => {
       const isConcluido = item.status === 'concluido';
       const val = parseCurrency(item.valor_servico);
@@ -253,6 +260,12 @@ export const dashboardService = {
         const lastMonthYr = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
         if (fd.getMonth() === lastMonth && fd.getFullYear() === lastMonthYr) {
           receitaMesPassado += val;
+        }
+
+        // Evolução da receita (últimos 6 meses, derivada da mesma base filtrada)
+        const revKey = `${fd.getFullYear()}-${fd.getMonth()}`;
+        if (revenueMonths[revKey]) {
+          revenueMonths[revKey].value += val;
         }
 
         // Distribuição por Técnico
@@ -301,6 +314,7 @@ export const dashboardService = {
       servicosPendentes: servicosPendentesCount,
       receitaPorTecnico: Object.values(techMap).sort((a,b) => b.valor - a.valor),
       receitaPorTipo: Object.values(typeMap).sort((a,b) => b.valor - a.valor),
+      receitaPorMes: Object.values(revenueMonths),
       divergenciaDetectada: false, // Forçamos 100% de consistência sem desvios
       auditLocal: receitaTotal,
       auditSaaS: receitaTotal

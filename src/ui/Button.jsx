@@ -1,11 +1,10 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, Platform } from 'react-native';
-import { radii } from '../theme/colors';
 import { useThemeColors } from '../theme/useThemeColors';
 
 const SIZES = {
-  sm: { height: 34, paddingHorizontal: 14, fontSize: 12, borderRadius: radii.md },
-  md: { height: 42, paddingHorizontal: 18, fontSize: 13, borderRadius: radii.md },
-  lg: { height: 48, paddingHorizontal: 22, fontSize: 14, borderRadius: radii.md },
+  sm: { height: 36, paddingHorizontal: 14, fontSize: 12, borderRadius: 10 },
+  md: { height: 44, paddingHorizontal: 18, fontSize: 13, borderRadius: 12 },
+  lg: { height: 50, paddingHorizontal: 22, fontSize: 14, borderRadius: 13 },
 };
 
 export default function Button({
@@ -27,17 +26,19 @@ export default function Button({
       text: '#FFF',
       border: null,
       shadow: Platform.OS === 'web'
-        ? '0 4px 14px rgba(230,0,80,0.30), 0 1px 4px rgba(230,0,80,0.15)'
+        ? '0 8px 20px -6px rgba(230,0,80,0.45), 0 2px 6px rgba(230,0,80,0.18)'
         : null,
     },
     secondary: {
-      bg: colors.isDark ? 'rgba(255,255,255,0.06)' : '#F3F4F6',
+      bg: colors.surfaceElevated,
       text: colors.text,
       border: colors.border,
-      shadow: null,
+      shadow: Platform.OS === 'web'
+        ? '0 1px 2px rgba(42,16,32,0.04)'
+        : null,
     },
     outline: {
-      bg: 'transparent',
+      bg: colors.isDark ? 'transparent' : colors.surface,
       text: colors.text,
       border: colors.border,
       shadow: null,
@@ -47,7 +48,7 @@ export default function Button({
       text: '#FFF',
       border: null,
       shadow: Platform.OS === 'web'
-        ? '0 4px 12px rgba(16,185,129,0.28)'
+        ? '0 8px 20px -6px rgba(16,185,129,0.40)'
         : null,
     },
     danger: {

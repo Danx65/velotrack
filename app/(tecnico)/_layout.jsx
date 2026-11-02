@@ -156,18 +156,21 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.bg,
   },
   sidebar: {
-    width: 250,
+    width: 252,
     backgroundColor: colors.surface,
     borderRightWidth: 1,
     borderRightColor: colors.border,
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing['2xl'],
     paddingHorizontal: spacing.lg,
     justifyContent: 'space-between',
     height: '100%',
-    shadowColor: colors.shadowColor,
-    shadowOffset: { width: 1, height: 0 },
-    shadowOpacity: colors.shadowOpacityDesktop,
-    shadowRadius: colors.shadowRadiusDesktop,
+    ...Platform.select({
+      web: {
+        boxShadow: colors.isDark
+          ? '8px 0 32px rgba(0,0,0,0.28)'
+          : '8px 0 32px rgba(42,16,32,0.035)',
+      },
+    }),
   },
   mainContent: {
     flex: 1,
@@ -178,18 +181,18 @@ const getStyles = (colors) => StyleSheet.create({
     gap: spacing.xs,
   },
   brandText: {
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 4,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 3.4,
   },
   badgeRole: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.text === '#FFFFFF' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(15, 23, 42, 0.04)',
+    backgroundColor: colors.surfaceElevated,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     marginTop: 4,
   },
   badgeRoleText: {
@@ -206,15 +209,15 @@ const getStyles = (colors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     gap: 12,
   },
   navItemActive: {
     backgroundColor: colors.primarySoft,
   },
   navItemHover: {
-    backgroundColor: colors.text === '#FFFFFF' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(15, 23, 42, 0.035)',
+    backgroundColor: colors.surfaceElevated,
   },
   navLabel: {
     fontSize: 13,
@@ -233,9 +236,11 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.primary,
   },
   profileBox: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.lg,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
     gap: spacing.md,
   },
   profileRow: {
@@ -244,14 +249,14 @@ const getStyles = (colors) => StyleSheet.create({
     gap: 10,
   },
   profileAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     backgroundColor: colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(230,0,80,0.15)',
+    borderColor: 'rgba(230,0,80,0.18)',
   },
   avatarText: {
     fontSize: 12,

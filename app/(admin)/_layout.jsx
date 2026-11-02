@@ -6,7 +6,7 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { useThemeColors } from '../../src/theme';
 
 const TABS = [
-  { name: 'index',         title: 'Visão geral',    icon: 'view-dashboard-outline',  active: 'view-dashboard' },
+  { name: 'index',         title: 'Dashboard',      icon: 'view-dashboard-outline',  active: 'view-dashboard' },
   { name: 'criar-servico', title: 'Ordens',          icon: 'plus-circle-outline',     active: 'plus-circle' },
   { name: 'agenda',        title: 'Agenda',          icon: 'calendar-blank-outline',  active: 'calendar' },
   { name: 'tecnicos',      title: 'Técnicos',        icon: 'account-group-outline',   active: 'account-group' },
@@ -15,7 +15,7 @@ const TABS = [
 
 const NAV_SECTIONS = [
   {
-    title: null,
+    title: 'Visão geral',
     tabs: ['index'],
   },
   {
@@ -67,7 +67,7 @@ export default function AdminLayout() {
           <View style={styles.brandBox}>
             <View style={styles.brandLogoRow}>
               <View style={styles.brandIconWrap}>
-                <MaterialCommunityIcons name="lightning-bolt" size={16} color="#E60050" />
+                <MaterialCommunityIcons name="lightning-bolt" size={16} color="#FFFFFF" />
               </View>
               <Text style={styles.brandText}>
                 <Text style={{ color: colors.text }}>VELO</Text>
@@ -201,19 +201,20 @@ const getStyles = (colors) => StyleSheet.create({
 
   /* ── Sidebar ── */
   sidebar: {
-    width: 240,
+    width: 252,
     backgroundColor: colors.surface,
-    paddingTop: spacing.xl,
+    paddingTop: spacing['2xl'],
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     justifyContent: 'space-between',
     height: '100%',
-    // Sombra sutil à direita (separação do conteúdo)
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
     ...Platform.select({
       web: {
         boxShadow: colors.isDark
-          ? '2px 0 12px rgba(0,0,0,0.25)'
-          : '2px 0 12px rgba(31,41,55,0.06)',
+          ? '8px 0 32px rgba(0,0,0,0.30)'
+          : '8px 0 32px rgba(42,16,32,0.035)',
         zIndex: 10,
       },
     }),
@@ -221,26 +222,29 @@ const getStyles = (colors) => StyleSheet.create({
 
   /* ── Brand ── */
   brandBox: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing['2xl'],
   },
   brandLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     marginBottom: spacing.lg,
   },
   brandIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: radii.md,
-    backgroundColor: 'rgba(230,0,80,0.08)',
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Platform.select({
+      web: { boxShadow: '0 6px 16px -4px rgba(230,0,80,0.55)' },
+    }),
   },
   brandText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 3,
+    letterSpacing: 3.2,
   },
   brandDivider: {
     height: 1,
@@ -253,46 +257,46 @@ const getStyles = (colors) => StyleSheet.create({
     gap: 4,
   },
   navSection: {
-    marginBottom: spacing.lg,
-    gap: 2,
+    marginBottom: spacing.xl,
+    gap: 3,
   },
   sectionTitle: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textMuted,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     paddingHorizontal: spacing.md,
-    marginBottom: 4,
+    marginBottom: 6,
     marginTop: 4,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     gap: 10,
     position: 'relative',
     overflow: 'hidden',
   },
   navItemActive: {
-    backgroundColor: 'rgba(230,0,80,0.06)',
+    backgroundColor: colors.primarySoft,
   },
   navItemHover: {
-    backgroundColor: colors.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(17,24,39,0.03)',
+    backgroundColor: colors.surfaceElevated,
   },
   activeBar: {
     position: 'absolute',
     left: 0,
-    top: 6,
-    bottom: 6,
+    top: 9,
+    bottom: 9,
     width: 3,
-    borderRadius: 2,
-    backgroundColor: '#E60050',
+    borderRadius: 3,
+    backgroundColor: colors.primary,
   },
   navLabel: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
     color: colors.textMuted,
     flex: 1,
   },
@@ -303,9 +307,11 @@ const getStyles = (colors) => StyleSheet.create({
 
   /* ── Perfil ── */
   profileBox: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.lg,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
     gap: spacing.md,
   },
   profileRow: {

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { radii, spacing } from '../theme/colors';
 import { useThemeColors } from '../theme/useThemeColors';
@@ -39,13 +39,12 @@ function ServiceCard({ service, onPress, compact = false, hideBilling = false, s
   // Select micro colors for action tags
   const getTipoColors = (tipo) => {
     const t = (tipo || '').toLowerCase();
-    const isDarkTheme = colors.isDark;
     if (t.includes('instala')) return { bg: colors.primarySoft, text: colors.primary, border: 'rgba(230,0,80,0.15)' };
     if (t.includes('manuten')) return { bg: colors.warningSoft, text: colors.warning, border: 'rgba(245,158,11,0.15)' };
     if (t.includes('retira')) return { bg: colors.errorSoft, text: colors.error, border: 'rgba(239,68,68,0.15)' };
     return { 
-      bg: isDarkTheme ? 'rgba(255,255,255,0.04)' : '#E5E7EB', 
-      text: colors.textSecondary, 
+      bg: colors.surfaceElevated,
+      text: colors.textSecondary,
       border: colors.border 
     };
   };
@@ -159,15 +158,25 @@ export default memo(ServiceCard);
 const getStyles = (colors) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.lg,
-    marginBottom: spacing.sm,
-    shadowColor: colors.shadowColor,
-    shadowOffset: colors.shadowOffsetDesktop || { width: 0, height: 4 },
-    shadowOpacity: colors.shadowOpacityDesktop || 0.05,
-    shadowRadius: colors.shadowRadiusDesktop || 12,
+    padding: spacing.xl,
+    marginBottom: spacing.md,
+    ...Platform.select({
+      web: {
+        boxShadow: colors.isDark
+          ? '0 1px 2px rgba(0,0,0,0.4), 0 14px 30px rgba(0,0,0,0.26)'
+          : '0 1px 2px rgba(42,16,32,0.04), 0 14px 30px -12px rgba(42,16,32,0.09)',
+      },
+      default: {
+        shadowColor: colors.shadowColor,
+        shadowOffset: colors.shadowOffsetDesktop || { width: 0, height: 8 },
+        shadowOpacity: colors.shadowOpacityDesktop || 0.08,
+        shadowRadius: colors.shadowRadiusDesktop || 24,
+        elevation: colors.isDark ? 4 : 2,
+      }
+    }),
   },
   cardAlta: {
     borderLeftWidth: 5,
@@ -178,8 +187,8 @@ const getStyles = (colors) => StyleSheet.create({
   },
   cardConcluido: {
     borderLeftWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.04)',
-    opacity: 0.9,
+    borderColor: colors.border,
+    opacity: 0.92,
   },
   top: {
     flexDirection: 'row',
@@ -195,14 +204,14 @@ const getStyles = (colors) => StyleSheet.create({
     marginRight: spacing.sm,
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.md,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(99,91,255,0.12)',
+    borderColor: 'rgba(230,0,80,0.16)',
   },
   avatarConcluido: {
     backgroundColor: colors.successSoft,

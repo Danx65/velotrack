@@ -30,40 +30,39 @@ export function CardSection({ label, children, style }) {
 const getStyles = (colors) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    // No light mode: sem borda, só sombra suave (como no CRM do print)
-    // No dark mode: borda sutil + sombra mais intensa
-    borderWidth: colors.isDark ? 1 : 0,
-    borderColor: colors.isDark ? colors.border : 'transparent',
+    borderRadius: radii.xl,
+    // Hairline em ambos os temas para um acabamento mais preciso
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.lg,
     alignSelf: 'stretch',
-    // Sombra difusa estilo CRM profissional
+    // Sombra difusa em camadas, com subtom quente no light
     ...Platform.select({
       web: {
         boxShadow: colors.isDark
-          ? '0 4px 24px rgba(0,0,0,0.35)'
-          : '0 2px 16px rgba(31,41,55,0.07), 0 1px 4px rgba(31,41,55,0.04)',
+          ? '0 1px 2px rgba(0,0,0,0.4), 0 18px 40px rgba(0,0,0,0.35)'
+          : '0 1px 2px rgba(42,16,32,0.04), 0 18px 40px -12px rgba(42,16,32,0.10)',
       },
       default: {
         shadowColor: colors.shadowColor,
-        shadowOffset: colors.shadowOffsetDesktop || { width: 0, height: 4 },
-        shadowOpacity: colors.shadowOpacityDesktop || 0.07,
-        shadowRadius: colors.shadowRadiusDesktop || 16,
+        shadowOffset: colors.shadowOffsetDesktop || { width: 0, height: 8 },
+        shadowOpacity: colors.shadowOpacityDesktop || 0.08,
+        shadowRadius: colors.shadowRadiusDesktop || 24,
         elevation: colors.isDark ? 6 : 3,
       }
     }),
   },
   padded: {
-    padding: spacing.xl,
+    padding: spacing['2xl'],
   },
   section: {
     marginBottom: spacing.xs,
   },
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
     color: colors.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: spacing.lg,
   },

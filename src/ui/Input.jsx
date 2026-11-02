@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { radii, spacing } from '../theme/colors';
+import { spacing } from '../theme/colors';
 import { useThemeColors } from '../theme/useThemeColors';
 
 export default function Input({
@@ -35,7 +35,7 @@ export default function Input({
           backgroundColor: colors.surface,
           borderColor: colors.border,
         },
-        focused && [styles.boxFocused, { borderColor: colors.primary, backgroundColor: 'rgba(230, 0, 80, 0.03)' }],
+        focused && [styles.boxFocused, { borderColor: colors.primary, backgroundColor: colors.primarySoft }],
         error && styles.boxError,
         multiline && styles.boxMultiline,
       ]}>
@@ -73,7 +73,7 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: '800',
     color: colors.textMuted,
     marginBottom: spacing.sm,
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
   labelFocused: {
@@ -82,16 +82,28 @@ const getStyles = (colors) => StyleSheet.create({
   box: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: colors.surface,
     borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: radii.md,
+    borderRadius: 12,
     paddingHorizontal: spacing.md,
-    height: 46,
+    height: 48,
+    ...Platform.select({
+      web: {
+        transitionProperty: 'border-color, background-color, box-shadow',
+        transitionDuration: '160ms',
+        transitionTimingFunction: 'ease',
+      },
+    }),
   },
   boxFocused: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(99,91,255,0.03)',
+    backgroundColor: colors.primarySoft,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 0 3px rgba(230,0,80,0.10)',
+      },
+    }),
   },
   boxError: {
     borderColor: colors.error,

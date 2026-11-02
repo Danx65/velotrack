@@ -24,6 +24,7 @@ import { useQuery } from '../../src/hooks/useQuery';
 import { Card, CardSection } from '../../src/ui/Card';
 import { Skeleton, SkeletonCard } from '../../src/ui/Skeleton';
 import BarChart from '../../src/ui/BarChart';
+import RevenueLineChart from '../../src/ui/RevenueLineChart';
 import RankingCard from '../../src/ui/RankingCard';
 
 function getDayGreeting() {
@@ -192,9 +193,23 @@ export default function AdminDashboard() {
   };
 
   const techDropdownOptions = [
-    { id: 'todos', label: 'Todos os Técnicos' },
+    { id: 'todos', label: 'Todos os TǸcnicos' },
     ...(Array.isArray(activeTecnicos) ? activeTecnicos : []).map(t => ({ id: t.id, label: t.nome }))
-  ];  return (
+  ];
+
+  const overviewItems = [
+    { label: 'OS em andamento', value: stats?.emAndamento ?? 0, sub: 'em atendimento agora', icon: 'people-outline', color: '#3B82F6', bg: 'rgba(59,130,246,0.10)' },
+    { label: 'Ordens hoje', value: stats?.ordensHoje ?? 0, sub: 'criadas hoje', icon: 'document-text-outline', color: colors.primary, bg: colors.primarySoft },
+    { label: 'Atendimentos concluídos', value: stats?.concluidasMes ?? 0, sub: 'no mês atual', icon: 'checkmark-circle-outline', color: colors.success, bg: colors.successSoft },
+    { label: 'OS pendentes', value: stats?.pendentes ?? 0, sub: 'aguardando atendimento', icon: 'alert-circle-outline', color: colors.warning, bg: colors.warningSoft },
+  ];
+  const receitaPorTecnico = Array.isArray(finStats?.receitaPorTecnico) ? finStats.receitaPorTecnico : [];
+  const receitaPorTipo = Array.isArray(finStats?.receitaPorTipo) ? finStats.receitaPorTipo : [];
+  const performanceMax = Number(receitaPorTecnico[0]?.valor) || 1;
+  const growth = Number(finStats?.growth_percentage) || 0;
+  const activeFilterCount = Object.values(filters).filter((value) => value !== 'todos' && value !== 'todas').length;
+
+  return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       {/* ── Header estilo CRM ── */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
@@ -209,7 +224,7 @@ export default function AdminDashboard() {
           {/* Refresh */}
           <Pressable
             onPress={onRefresh}
-            style={[styles.iconControlBtn, { backgroundColor: colors.isDark ? colors.surfaceElevated : '#F3F4F6', borderColor: colors.border }]}
+            style={[styles.iconControlBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
           >
             {refreshing ? (
               <ActivityIndicator size="small" color={colors.primary} />
@@ -221,7 +236,7 @@ export default function AdminDashboard() {
           {/* Theme toggle */}
           <Pressable
             onPress={toggleTheme}
-            style={[styles.iconControlBtn, { backgroundColor: colors.isDark ? colors.surfaceElevated : '#F3F4F6', borderColor: colors.border }]}
+            style={[styles.iconControlBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
           >
             <Ionicons
               name={isDark ? 'sunny-outline' : 'moon-outline'}
@@ -273,72 +288,14 @@ export default function AdminDashboard() {
           </View>
         )}
 
-        {/* STATS COUNT OVERVIEW GRID */}
-        {statsLoading ? (
-          <View style={styles.grid}>
-            {[1, 2, 3, 4].map(i => (
-              <View key={i} style={styles.statCard}>
-                <Skeleton width={32} height={32} borderRadius={radii.sm} />
-                <Skeleton width={50} height={28} style={{ marginTop: 8 }} />
-              </View>
-            ))}
+        {/* SECTION HEADER */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Visão geral</Text>
+          <View style={styles.sectionStatus}>
+            <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+            <Text style={styles.sectionStatusText}>Dados do período selecionado</Text>
           </View>
-        ) : stats ? (
-          <View style={styles.grid}>
-            {/* OS em andamento */}
-            <View style={styles.statCard}>
-              <View style={[styles.statIconCircle, { backgroundColor: 'rgba(59,130,246,0.10)' }]}>
-                <Ionicons name="people-outline" size={20} color="#3B82F6" />
-              </View>
-              <Text style={styles.statLabel}>OS em andamento</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stats.emAndamento ?? '--'}</Text>
-              <View style={styles.trendRow}>
-                <Text style={[styles.trendSub, { color: colors.textSecondary }]}>em atendimento agora</Text>
-              </View>
-            </View>
-
-            {/* Ordens hoje */}
-            <View style={styles.statCard}>
-              <View style={[styles.statIconCircle, { backgroundColor: 'rgba(230,0,80,0.08)' }]}>
-                <Ionicons name="document-text-outline" size={20} color="#E60050" />
-              </View>
-              <Text style={styles.statLabel}>Ordens hoje</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stats.ordensHoje}</Text>
-              <View style={styles.trendRow}>
-                <Text style={[styles.trendSub, { color: colors.textSecondary }]}>criadas hoje</Text>
-              </View>
-            </View>
-
-            {/* Atendimentos concluídos */}
-            <View style={styles.statCard}>
-              <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16,185,129,0.10)' }]}>
-                <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
-              </View>
-              <Text style={styles.statLabel}>Atendimentos concluídos</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stats.concluidasMes}</Text>
-              <View style={styles.trendRow}>
-                <Text style={[styles.trendSub, { color: colors.textSecondary }]}>
-                  {stats.total > 0 ? `${Math.round((stats.finalizados / stats.total) * 100)}% do total` : 'sem OS ainda'}
-                </Text>
-              </View>
-            </View>
-
-            {/* OS Pendentes */}
-            <View style={styles.statCard}>
-              <View style={[styles.statIconCircle, { backgroundColor: 'rgba(245,158,11,0.10)' }]}>
-                <Ionicons name="alert-circle-outline" size={20} color="#F59E0B" />
-              </View>
-              <Text style={styles.statLabel}>OS pendentes</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stats.pendentes}</Text>
-              <View style={styles.trendRow}>
-                <View style={[styles.trendBadge, { backgroundColor: 'rgba(245,158,11,0.08)' }]}>
-                  <Ionicons name="time-outline" size={11} color="#F59E0B" />
-                  <Text style={[styles.trendText, { color: '#F59E0B' }]}>Aguardando</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        ) : null}
+        </View>
 
         {/* INTERACTIVE FILTERS DRAWER */}
         <Card style={styles.filtersCard}>
@@ -352,10 +309,10 @@ export default function AdminDashboard() {
             >
               <View style={styles.filtersHeaderTitleBox}>
                 <Ionicons name="funnel-outline" size={16} color={colors.primary} />
-                <Text style={[styles.filtersTitle, { color: colors.text }]}>Filtros Analíticos Avançados</Text>
-                {(filters.periodo !== 'todas' || filters.tecnico !== 'todos' || filters.status !== 'todos' || filters.tipo_servico !== 'todos' || filters.forma_pagamento !== 'todos') && (
+                <Text style={[styles.filtersTitle, { color: colors.text }]}>Filtros analíticos</Text>
+                {activeFilterCount > 0 && (
                   <View style={[styles.activeFilterBadge, { backgroundColor: colors.primarySoft || 'rgba(230,0,80,0.08)' }]}>
-                    <Text style={[styles.activeFilterBadgeText, { color: colors.primary }]}>ATIVO</Text>
+                    <Text style={[styles.activeFilterBadgeText, { color: colors.primary }]}>{activeFilterCount} ATIVOS</Text>
                   </View>
                 )}
               </View>
@@ -365,6 +322,9 @@ export default function AdminDashboard() {
                 color={colors.textSecondary}
               />
             </Pressable>
+            <Text style={styles.filtersCount}>
+              {activeFilterCount > 0 ? `${activeFilterCount} ativos` : '5 filtros'}
+            </Text>
             <Pressable
               onPress={exportCSV}
               style={({ pressed }) => [
@@ -439,209 +399,332 @@ export default function AdminDashboard() {
           )}
         </Card>
 
-        {/* FINANCIAL STATS CARDS BLOCK */}
-        {finLoading ? (
-          <View style={styles.grid}>
-            {[1, 2, 3, 4].map(idx => (
-              <View key={idx} style={styles.statCard}>
-                <Skeleton width={32} height={32} borderRadius={radii.sm} />
-                <Skeleton width={60} height={28} style={{ marginTop: 8 }} />
+        {/* HERO RECEITA */}
+        {finLoading || statsLoading ? (
+          <Card padded={false} style={styles.heroCard}>
+            <View style={styles.heroLoading}>
+              <View style={styles.heroLoadingLeft}>
+                <Skeleton width="35%" height={12} />
+                <Skeleton width="65%" height={42} style={{ marginTop: 14 }} />
+                <Skeleton width="45%" height={20} style={{ marginTop: 14 }} />
+                <Skeleton width="80%" height={12} style={{ marginTop: 28 }} />
               </View>
-            ))}
-          </View>
+              <View style={styles.heroLoadingRight}>
+                <Skeleton width="100%" height={190} borderRadius={16} />
+              </View>
+            </View>
+          </Card>
         ) : finStats ? (
-          <View style={styles.grid}>
-            <View style={styles.statCard}>
-              <View style={[styles.leftAccentBar, { backgroundColor: colors.success }]} />
-              <View style={styles.statTop}>
-                <Text style={styles.statLabel}>FATURAMENTO COMPLETO</Text>
-                <View style={[styles.statIconDot, { backgroundColor: colors.successSoft }]}>
-                  <Ionicons name="cash-outline" size={15} color={colors.success} />
+          <Card padded={false} style={styles.heroCard}>
+            <View style={isDesktop ? styles.heroGrid : styles.heroGridMobile}>
+              <View style={[styles.heroLeft, isDesktop && styles.heroLeftDesktop]}>
+                <View style={styles.revenueLabelRow}>
+                  <View style={[styles.revenueDot, { backgroundColor: colors.primary }]} />
+                  <Text style={styles.revenueLabel}>RECEITA DO MÊS</Text>
                 </View>
-              </View>
-              <Text style={[styles.statValue, { color: colors.success, fontSize: 26 }]}>
-                {formatCurrencyValue(finStats.receitaTotal)}
-              </Text>
-              <View style={styles.trendRow}>
-                {finStats.growth_percentage !== 0 && (
-                  <View style={[styles.trendBadge, { backgroundColor: colors.successSoft }]}>
-                    <Ionicons 
-                      name={finStats.growth_percentage > 0 ? "trending-up" : "trending-down"} 
-                      size={12} 
-                      color={finStats.growth_percentage > 0 ? colors.success : colors.error} 
-                    />
-                    <Text style={[
-                      styles.trendText, 
-                      { color: finStats.growth_percentage > 0 ? colors.success : colors.error }
+
+                <Text style={[styles.revenueValue, { color: colors.text }]} numberOfLines={1}>
+                  {formatCurrencyValue(finStats.receitaMensal)}
+                </Text>
+
+                <View style={styles.growthRow}>
+                  {growth !== 0 ? (
+                    <View style={[
+                      styles.growthBadge,
+                      { backgroundColor: growth > 0 ? colors.successSoft : colors.errorSoft },
                     ]}>
-                      {finStats.growth_percentage > 0 ? '+' : ''}
-                      {finStats.growth_percentage.toFixed(1)}% vs MM
+                      <Ionicons
+                        name={growth > 0 ? 'trending-up-outline' : 'trending-down-outline'}
+                        size={12}
+                        color={growth > 0 ? colors.success : colors.error}
+                      />
+                      <Text style={[styles.growthText, { color: growth > 0 ? colors.success : colors.error }]}>
+                        {growth > 0 ? '+' : ''}{growth.toFixed(1)}%
+                      </Text>
+                    </View>
+                  ) : null}
+                  <Text style={styles.growthCaption}>em relação ao mês anterior</Text>
+                </View>
+
+                <View style={[styles.heroDivider, { backgroundColor: colors.border }]} />
+
+                <View style={styles.heroStatsRow}>
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroStatLabel}>FATURAMENTO ACUMULADO</Text>
+                    <Text style={[styles.heroStatValue, { color: colors.text }]}>
+                      {formatCurrencyValue(finStats.receitaTotal)}
                     </Text>
                   </View>
-                )}
-                <Text style={styles.trendSub}>Progresso estratégico</Text>
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroStatLabel}>ORDENS FATURADAS</Text>
+                    <View style={styles.heroStatValueRow}>
+                      <Text style={[styles.heroStatValue, { color: colors.text }]}>
+                        {stats?.finalizados ?? 0}
+                      </Text>
+                      <Text style={styles.heroStatUnit}>concluídas</Text>
+                    </View>
+                  </View>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.statCard}>
-              <View style={[styles.leftAccentBar, { backgroundColor: colors.primary }]} />
-              <View style={styles.statTop}>
-                <Text style={styles.statLabel}>RECEITA MENSAL</Text>
-                <View style={[styles.statIconDot, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="pulse-outline" size={15} color={colors.primary} />
+              <View style={[styles.heroRight, isDesktop && styles.heroRightDesktop]}>
+                <View style={styles.chartHeaderRow}>
+                  <View style={styles.chartHeaderTextBox}>
+                    <Text style={[styles.chartTitle, { color: colors.text }]}>Evolução da receita</Text>
+                    <Text style={styles.chartSubtitle}>Acumulado — últimos 6 meses</Text>
+                  </View>
+                  <View style={[styles.chartPeriodBadge, { backgroundColor: colors.surfaceElevated }]}>
+                    <Text style={[styles.chartPeriodText, { color: colors.primary }]}>6M</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.statValue, { color: colors.text, fontSize: 22 }]}>
-                {formatCurrencyValue(finStats.receitaMensal)}
-              </Text>
-              <Text style={styles.statMiniSub}>Mês calendário atual</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.leftAccentBar, { backgroundColor: '#FF1A6C' }]} />
-              <View style={styles.statTop}>
-                <Text style={styles.statLabel}>TICKET MÉDIO</Text>
-                <View style={[styles.statIconDot, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="calculator-outline" size={15} color={colors.primary} />
+                <View style={styles.legendRow}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+                    <Text style={styles.legendText}>Período atual</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.statValue, { color: colors.text, fontSize: 22 }]}>
-                {formatCurrencyValue(finStats.ticketMedio)}
-              </Text>
-              <Text style={styles.statMiniSub}>Por Ordem concluída</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.leftAccentBar, { backgroundColor: colors.textSecondary }]} />
-              <View style={styles.statTop}>
-                <Text style={styles.statLabel}>PAGOS VS PENDENTES</Text>
-                <View style={[styles.statIconDot, { backgroundColor: colors.isDark ? 'rgba(255,255,255,0.05)' : '#E5E7EB' }]}>
-                  <Ionicons name="stats-chart-outline" size={15} color={colors.textMuted} />
-                </View>
-              </View>
-              <View style={styles.splitPaymentsRow}>
-                <View>
-                  <Text style={[styles.splitMain, { color: colors.text }]}>{finStats.servicosPagos}</Text>
-                  <Text style={[styles.splitSub, { color: colors.success }]}>PAGOS</Text>
-                </View>
-                <View style={[styles.splitDivider, { backgroundColor: colors.border }]} />
-                <View>
-                  <Text style={[styles.splitMain, { color: colors.text }]}>{finStats.servicosPendentes}</Text>
-                  <Text style={[styles.splitSub, { color: colors.warning }]}>PENDENTES</Text>
-                </View>
+                <RevenueLineChart data={finStats.receitaPorMes || []} height={isDesktop ? 200 : 170} />
               </View>
             </View>
-          </View>
+          </Card>
         ) : null}
 
-        {/* CHARTS & DISTRIBUTION DETAILS */}
-        <View style={isDesktop ? styles.desktopSplit : styles.mobileSplit}>
-          <View style={styles.chartCol}>
-            {/* Monthly productivity progress chart */}
-            <BarChart 
-              data={chartData || []} 
-              title="Produtividade Mensal (OS Concluídas)" 
-              height={200} 
-            />
-
-            {/* Faturamento por Tipo de Serviço */}
-            <Card style={styles.breakoutCard}>
-              <CardSection label="Faturamento por Tipo de Serviço">
-                {finLoading ? (
-                  <View style={{ padding: spacing.md, gap: 10 }}>
-                    <Skeleton width="70%" height={14} />
-                    <Skeleton width="55%" height={14} />
-                    <Skeleton width="62%" height={14} />
+        {/* FAIXA DE KPIs */}
+        {statsLoading ? (
+          <Card padded={false} style={styles.stripCard}>
+            <View style={styles.stripRow}>
+              {[1, 2, 3, 4].map((item) => (
+                <View key={item} style={styles.stripItem}>
+                  <Skeleton width={38} height={38} borderRadius={12} />
+                  <View style={styles.stripInfo}>
+                    <Skeleton width={70} height={10} />
+                    <Skeleton width={44} height={22} style={{ marginTop: 8 }} />
                   </View>
-                ) : Array.isArray(finStats?.receitaPorTipo) && finStats.receitaPorTipo.length > 0 ? (
-                  finStats.receitaPorTipo.map((item, idx) => (
-                    <View key={idx} style={styles.progressRowContainer}>
-                      <View style={styles.progressRowMeta}>
-                        <Text style={[styles.progressRowLabel, { color: colors.textSecondary }]}>{item.tipo}</Text>
-                        <Text style={[styles.progressRowValue, { color: colors.text }]}>{formatCurrencyValue(item.valor)}</Text>
-                      </View>
-                      <View style={[styles.progressBarBg, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.05)' : '#E5E7EB' }]}>
-                        <View style={[
-                          styles.progressBarFill, 
-                          { width: `${Math.min(100, finStats.receitaTotal > 0 ? (item.valor / finStats.receitaTotal) * 100 : 0)}%`, backgroundColor: colors.primary }
-                        ]} />
-                      </View>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>Sem dados de vendas faturadas.</Text>
-                )}
-              </CardSection>
-            </Card>
-          </View>
-
-          <View style={styles.breakoutCol}>
-            {/* Meta mensal OS progress */}
-            <Card style={styles.goalsCard}>
-              <CardSection label="Progresso da Meta Operacional">
-                <View style={styles.metaHead}>
-                  <View>
-                    <Text style={[styles.metaPct, { color: colors.primary }]}>{pct}%</Text>
-                    <Text style={[styles.metaPeriod, { color: colors.textMuted }]}>PROGRESSO MENSAL</Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+        ) : (
+          <Card padded={false} style={styles.stripCard}>
+            <View style={styles.stripRow}>
+              {overviewItems.map((item, index) => (
+                <View
+                  key={item.label}
+                  style={[styles.stripItem, isDesktop && index > 0 && styles.stripDivider]}
+                >
+                  <View style={[styles.stripIcon, { backgroundColor: item.bg }]}>
+                    <Ionicons name={item.icon} size={18} color={item.color} />
                   </View>
-                  <View style={[styles.metaCountContainer, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.04)' : '#F3F4F6', borderColor: colors.border }]}>
-                    <Text style={[styles.metaCount, { color: colors.text }]}>
-                      {realizadoMes} <Text style={{ color: colors.textMuted }}>/ {metaMensal} OS</Text>
+                  <View style={styles.stripInfo}>
+                    <Text style={styles.stripLabel}>{item.label}</Text>
+                    <Text style={[styles.stripValue, { color: colors.text }]}>
+                      {String(item.value).padStart(2, '0')}
                     </Text>
+                    <Text style={styles.stripSub}>{item.sub}</Text>
                   </View>
                 </View>
-                <View style={[styles.progressBg, { backgroundColor: colors.isDark ? 'rgba(255, 255, 255, 0.05)' : '#E5E7EB' }]}>
-                  <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: colors.primary }]} />
-                </View>
-              </CardSection>
-            </Card>
+              ))}
+            </View>
+          </Card>
+        )}
 
-            {/* Ranking de Líderes Técnicos por OS */}
-            <Card style={styles.rankingCard}>
-              <CardSection label="Ranking de Produtividade Técnica">
-                {rankingLoading ? (
-                  [1, 2, 3].map(i => <Skeleton key={i} width="100%" height={46} style={{ marginBottom: 8, borderRadius: radii.md }} />)
-                ) : Array.isArray(ranking) && ranking.length > 0 ? (
-                  ranking.map((item, index) => (
-                    <RankingCard key={index} position={index + 1} nome={item.nome} total={item.total} />
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>Nenhum serviço finalizado ainda.</Text>
-                )}
-              </CardSection>
-            </Card>
-
-            {/* Faturamento por Técnico */}
-            <Card style={styles.rankingCard}>
-              <CardSection label="Performance Comercial por Técnico">
-                {finLoading ? (
-                  <View style={{ padding: spacing.md, gap: 10 }}>
-                    <Skeleton width="80%" height={14} />
-                    <Skeleton width="65%" height={14} />
-                    <Skeleton width="72%" height={14} />
+        {/* FAIXA FINANCEIRA */}
+        {finLoading ? (
+          <Card padded={false} style={styles.finStripCard}>
+            <View style={styles.finStripRow}>
+              {[1, 2, 3].map((item) => (
+                <View key={item} style={styles.finStripItem}>
+                  <Skeleton width={34} height={34} borderRadius={10} />
+                  <View style={styles.stripInfo}>
+                    <Skeleton width={90} height={10} />
+                    <Skeleton width={70} height={16} style={{ marginTop: 8 }} />
                   </View>
-                ) : Array.isArray(finStats?.receitaPorTecnico) && finStats.receitaPorTecnico.length > 0 ? (
-                  finStats.receitaPorTecnico.map((item, index) => (
-                    <View key={index} style={styles.techPerfRow}>
-                      <View style={styles.techPerfAvatar}>
-                        <Text style={styles.techPerfAvatarText}>
-                          {(item.nome || 'T').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                        </Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+        ) : (
+          <Card padded={false} style={styles.finStripCard}>
+            <View style={isDesktop ? styles.finStripRow : styles.finStripColumn}>
+              <View style={styles.finStripItem}>
+                <View style={[styles.finStripIcon, { backgroundColor: colors.primarySoft }]}>
+                  <Ionicons name="receipt-outline" size={17} color={colors.primary} />
+                </View>
+                <View style={styles.stripInfo}>
+                  <Text style={styles.finStripLabel}>TICKET MÉDIO</Text>
+                  <Text style={[styles.finStripValue, { color: colors.text }]}>
+                    {formatCurrencyValue(finStats?.ticketMedio || 0)}
+                  </Text>
+                  <Text style={styles.finStripSub}>por ordem concluída</Text>
+                </View>
+              </View>
+
+              <View style={[styles.finStripItem, isDesktop && styles.finStripDivider]}>
+                <View style={[styles.finStripIcon, { backgroundColor: colors.successSoft }]}>
+                  <Ionicons name="card-outline" size={17} color={colors.success} />
+                </View>
+                <View style={styles.stripInfo}>
+                  <Text style={styles.finStripLabel}>CONTROLE DE PAGAMENTOS</Text>
+                  <Text style={styles.finStripSub}>ordens concluídas</Text>
+                  <View style={styles.paymentRow}>
+                    <View style={styles.paymentPill}>
+                      <View style={[styles.paymentDot, { backgroundColor: colors.success }]} />
+                      <Text style={styles.paymentText}>{finStats?.servicosPagos ?? 0} pagos</Text>
+                    </View>
+                    <View style={styles.paymentPill}>
+                      <View style={[styles.paymentDot, { backgroundColor: colors.warning }]} />
+                      <Text style={styles.paymentText}>{finStats?.servicosPendentes ?? 0} pendentes</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={[styles.finStripItem, isDesktop && styles.finStripDivider]}>
+                <View style={[styles.finStripIcon, { backgroundColor: colors.surfaceElevated }]}>
+                  <Ionicons name="document-text-outline" size={17} color={colors.textSecondary} />
+                </View>
+                <View style={styles.stripInfo}>
+                  <Text style={styles.finStripLabel}>ORDENS FATURADAS</Text>
+                  <Text style={[styles.finStripValue, { color: colors.text }]}>
+                    {stats?.finalizados ?? 0}
+                  </Text>
+                  <Text style={styles.finStripSub}>concluídas no período</Text>
+                </View>
+              </View>
+            </View>
+          </Card>
+        )}
+
+        {/* PRODUTIVIDADE + FATURAMENTO POR TIPO */}
+        <View style={isDesktop ? styles.chartsRow : styles.chartsRowMobile}>
+          <View style={styles.mainChartCol}>
+            {statsLoading ? (
+              <Card style={styles.chartPlaceholder}>
+                <Skeleton width="100%" height={250} borderRadius={12} />
+              </Card>
+            ) : (
+              <BarChart
+                data={chartData || []}
+                title="Produtividade mensal (OS concluídas)"
+                subtitle="Volume mensal de ordens de serviço finalizadas"
+                height={isDesktop ? 220 : 180}
+              />
+            )}
+          </View>
+
+          <View style={styles.sideChartCol}>
+            <Card style={styles.breakdownCard}>
+              <View style={styles.cardTitleRow}>
+                <View style={styles.cardTitleBox}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Faturamento por tipo de serviço</Text>
+                  <Text style={styles.cardSubtitle}>Receita no período selecionado</Text>
+                </View>
+                <Text style={styles.cardTitleValue}>{formatCurrencyValue(finStats?.receitaTotal || 0)}</Text>
+              </View>
+
+              {finLoading ? (
+                <View style={styles.typeLoading}>
+                  <Skeleton width="100%" height={14} />
+                  <Skeleton width="82%" height={14} />
+                  <Skeleton width="70%" height={14} />
+                  <Skeleton width="56%" height={14} />
+                </View>
+              ) : receitaPorTipo.length > 0 ? (
+                receitaPorTipo.map((item, index) => {
+                  const percent = finStats?.receitaTotal > 0
+                    ? (item.valor / finStats.receitaTotal) * 100
+                    : 0;
+                  return (
+                    <View key={`${item.tipo}-${index}`} style={styles.typeRow}>
+                      <View style={styles.typeMetaRow}>
+                        <Text style={styles.typeLabel}>{item.tipo}</Text>
+                        <Text style={styles.typeValue}>{formatCurrencyValue(item.valor)}</Text>
                       </View>
-                      <View style={styles.techPerfMeta}>
-                        <Text style={[styles.techPerfName, { color: colors.text }]}>{item.nome}</Text>
-                        <Text style={[styles.techPerfValue, { color: colors.success }]}>
-                          {formatCurrencyValue(item.valor)}
-                        </Text>
+                      <View style={styles.typeTrack}>
+                        <View style={[styles.typeFill, { width: `${Math.min(100, percent)}%` }]} />
                       </View>
                     </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>Sem faturamento por técnicos para o filtro selecionado.</Text>
-                )}
-              </CardSection>
+                  );
+                })
+              ) : (
+                <Text style={styles.emptyText}>Sem dados de vendas faturadas.</Text>
+              )}
             </Card>
           </View>
+        </View>
+
+        {/* META + RANKING + PERFORMANCE */}
+        <View style={isDesktop ? styles.bottomRow : styles.bottomRowMobile}>
+          <Card style={styles.bottomCard}>
+            <Text style={styles.cardEyebrow}>PROGRESSO DA META OPERACIONAL</Text>
+            <View style={styles.goalHeader}>
+              <Text style={[styles.goalValue, { color: colors.primary }]}>{pct}%</Text>
+              <Text style={styles.goalCount}>
+                {realizadoMes} <Text style={styles.goalCountMuted}>/ {metaMensal} OS</Text>
+              </Text>
+            </View>
+            <View style={styles.goalTrack}>
+              <View style={[styles.goalFill, { width: `${pct}%` }]} />
+            </View>
+            <Text style={styles.goalCaption}>meta mensal de ordens concluídas</Text>
+          </Card>
+
+          <Card style={styles.bottomCard}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.cardEyebrow}>RANKING DE PRODUTIVIDADE TÉCNICA</Text>
+              <Text style={styles.cardEyebrowValue}>OS CONCLUÍDAS</Text>
+            </View>
+            {rankingLoading ? (
+              <View style={styles.typeLoading}>
+                <Skeleton width="100%" height={20} />
+                <Skeleton width="100%" height={20} />
+                <Skeleton width="100%" height={20} />
+              </View>
+            ) : Array.isArray(ranking) && ranking.length > 0 ? (
+              ranking.map((item, index) => (
+                <RankingCard
+                  key={`${item.nome}-${index}`}
+                  position={index + 1}
+                  nome={item.nome}
+                  total={item.total}
+                  max={ranking[0]?.total || 1}
+                />
+              ))
+            ) : (
+              <Text style={styles.emptyText}>Nenhum serviço finalizado ainda.</Text>
+            )}
+          </Card>
+
+          <Card style={styles.bottomCard}>
+            <View style={styles.cardTitleRow}>
+              <Text style={styles.cardEyebrow}>PERFORMANCE COMERCIAL POR TÉCNICO</Text>
+              <Text style={styles.cardEyebrowValue}>RECEITA</Text>
+            </View>
+            {finLoading ? (
+              <View style={styles.typeLoading}>
+                <Skeleton width="100%" height={18} />
+                <Skeleton width="100%" height={18} />
+                <Skeleton width="100%" height={18} />
+              </View>
+            ) : receitaPorTecnico.length > 0 ? (
+              receitaPorTecnico.map((item, index) => {
+                const percent = Math.min(100, ((Number(item.valor) || 0) / performanceMax) * 100);
+                return (
+                  <View key={`${item.nome}-${index}`} style={styles.perfRow}>
+                    <View style={styles.perfMeta}>
+                      <Text style={styles.perfName} numberOfLines={1}>{item.nome}</Text>
+                      <Text style={styles.perfValue}>{formatCurrencyValue(item.valor)}</Text>
+                    </View>
+                    <View style={styles.perfTrack}>
+                      <View style={[styles.perfFill, { width: `${percent}%` }]} />
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.emptyText}>Sem faturamento por técnicos para o filtro selecionado.</Text>
+            )}
+          </Card>
         </View>
 
         <View style={styles.bottomSpace} />
@@ -684,11 +767,13 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 1,
   },
   filtersTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     letterSpacing: -0.2,
+    flexShrink: 1,
   },
   activeFilterBadge: {
     paddingHorizontal: 8,
@@ -705,39 +790,39 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing['2xl'],
-    paddingVertical: 16,
+    paddingHorizontal: 28,
+    paddingVertical: 18,
     borderBottomWidth: 1,
-    // Sombra sutil no header (como no CRM)
+    // Sombra quase imperceptível, só para separar o header
     ...Platform.select({
       web: {
         boxShadow: colors.isDark
-          ? '0 1px 8px rgba(0,0,0,0.25)'
-          : '0 1px 6px rgba(31,41,55,0.05)',
+          ? '0 1px 0 rgba(0,0,0,0.35)'
+          : '0 1px 0 rgba(42,16,32,0.035)',
       },
     }),
   },
   headerTitleBox: { flex: 1, marginRight: spacing.lg },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
   },
   sub: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 3,
     fontWeight: '400',
   },
   headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   iconControlBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -745,13 +830,15 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
   btnNovaOS: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: radii.md,
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12,
     backgroundColor: '#E60050',
     ...Platform.select({
-      web: { boxShadow: '0 4px 14px rgba(230,0,80,0.30)' },
+      web: {
+        boxShadow: '0 8px 20px -6px rgba(230,0,80,0.45), 0 2px 6px rgba(230,0,80,0.18)',
+      },
     }),
   },
   btnNovaOSText: {
@@ -788,7 +875,7 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     textTransform: 'uppercase',
   },
   scroll: {
-    padding: spacing.xl,
+    padding: spacing['2xl'],
   },
   auditAlert: {
     flexDirection: 'row',
@@ -815,73 +902,95 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: spacing.xl,
+    gap: 16,
+    marginBottom: spacing['2xl'],
   },
   statCard: {
     minWidth: isDesktop ? '23%' : '46%',
     flexGrow: 1,
     flexShrink: 1,
     backgroundColor: colors.card,
-    borderRadius: radii.lg,
-    padding: spacing.xl,
-    // Sem borda no light, sombra difusa como no CRM
-    borderWidth: colors.isDark ? 1 : 0,
-    borderColor: colors.isDark ? colors.border : 'transparent',
-    gap: 6,
+    borderRadius: radii.xl,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 8,
+    overflow: 'hidden',
+    position: 'relative',
     ...Platform.select({
       web: {
         boxShadow: colors.isDark
-          ? '0 4px 20px rgba(0,0,0,0.3)'
-          : '0 2px 14px rgba(31,41,55,0.07), 0 1px 4px rgba(31,41,55,0.04)',
+          ? '0 1px 2px rgba(0,0,0,0.4), 0 18px 40px rgba(0,0,0,0.32)'
+          : '0 1px 2px rgba(42,16,32,0.04), 0 18px 40px -12px rgba(42,16,32,0.10)',
       },
     }),
   },
-  statIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
+  leftAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+  },
+  statTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  statIconDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+  },
+  statIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   statLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    letterSpacing: 0.1,
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   statValue: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
-    letterSpacing: -1,
-    lineHeight: 36,
+    letterSpacing: -1.2,
+    lineHeight: 38,
   },
   trendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     justifyContent: 'space-between',
   },
   trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(16,185,129,0.06)',
+    backgroundColor: 'rgba(16,185,129,0.08)',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: radii.sm,
+    borderRadius: 8,
   },
   trendText: {
     fontSize: 10,
     fontWeight: '700',
   },
   trendSub: {
-    fontSize: 10,
+    fontSize: 10.5,
     color: colors.textSecondary,
   },
   statMiniSub: {
-    fontSize: 11,
+    fontSize: 11.5,
     color: colors.textSecondary,
     marginTop: spacing.xs,
     fontWeight: '500',
@@ -890,7 +999,7 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.md,
-    gap: 16,
+    gap: 18,
   },
   splitMain: {
     fontSize: 20,
@@ -990,21 +1099,21 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     marginTop: 2,
   },
   metaCountContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radii.md,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.border,
   },
   metaCount: { fontSize: 13, fontWeight: '700' },
   progressBg: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 3,
+    height: 7,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 4,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', borderRadius: 3 },
+  progressFill: { height: '100%', borderRadius: 4 },
   rankingCard: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -1033,36 +1142,36 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     fontWeight: '700',
   },
   progressBarBg: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 3,
+    height: 7,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
     backgroundColor: colors.primary,
-    borderRadius: 3,
+    borderRadius: 4,
   },
   techPerfRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    backgroundColor: colors.surfaceElevated,
     padding: spacing.md,
-    borderRadius: radii.lg,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
   },
   techPerfAvatar: {
     width: 36,
     height: 36,
-    borderRadius: radii.md,
-    backgroundColor: 'rgba(230,0,80,0.08)',
+    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(230,0,80,0.15)',
+    borderColor: colors.border,
   },
   techPerfAvatarText: {
     fontSize: 12,
@@ -1084,5 +1193,523 @@ const getStyles = (colors, isDesktop) => StyleSheet.create({
     fontWeight: '800',
   },
   emptyText: { color: colors.textMuted, fontSize: 13, fontStyle: 'italic', marginVertical: 8 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 2,
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  sectionStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionStatusText: {
+    fontSize: 10.5,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  filtersCount: {
+    fontSize: 10.5,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginRight: 12,
+  },
+  heroCard: {
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  heroGrid: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  heroGridMobile: {
+    flexDirection: 'column',
+  },
+  heroLeft: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  heroLeftDesktop: {
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+  },
+  heroRight: {
+    flex: 1.8,
+    padding: 24,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+  heroRightDesktop: {},
+  revenueLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  revenueDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  revenueLabel: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 1.2,
+  },
+  revenueValue: {
+    fontSize: isDesktop ? 38 : 32,
+    fontWeight: '800',
+    letterSpacing: -1.4,
+    lineHeight: isDesktop ? 42 : 36,
+    marginTop: 8,
+  },
+  growthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  growthBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  growthText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  growthCaption: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  heroDivider: {
+    height: 1,
+    marginVertical: 18,
+  },
+  heroStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 28,
+  },
+  heroStat: {
+    minWidth: 120,
+  },
+  heroStatLabel: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+  },
+  heroStatValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    marginTop: 3,
+  },
+  heroStatValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 5,
+    marginTop: 3,
+  },
+  heroStatUnit: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  chartHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 8,
+  },
+  chartHeaderTextBox: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chartTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  chartSubtitle: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 3,
+    fontWeight: '500',
+  },
+  chartPeriodBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  chartPeriodText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  heroLoading: {
+    flexDirection: isDesktop ? 'row' : 'column',
+    gap: 24,
+    padding: 24,
+  },
+  heroLoadingLeft: {
+    flex: 1,
+  },
+  heroLoadingRight: {
+    flex: 1.8,
+    minWidth: 0,
+  },
+  stripCard: {
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  stripRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  stripItem: {
+    flexBasis: isDesktop ? '25%' : '50%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  stripDivider: {
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
+  stripIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stripInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  stripLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  stripValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.8,
+    lineHeight: 28,
+    marginTop: 2,
+  },
+  stripSub: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  finStripCard: {
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  finStripRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  finStripColumn: {
+    flexDirection: 'column',
+  },
+  finStripItem: {
+    flexBasis: isDesktop ? '33.33%' : '100%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  finStripDivider: {
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
+  finStripIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  finStripLabel: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.7,
+  },
+  finStripValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+  finStripSub: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    marginTop: 1,
+    fontWeight: '500',
+  },
+  paymentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 5,
+  },
+  paymentPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  paymentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  paymentText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  chartsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 20,
+  },
+  chartsRowMobile: {
+    flexDirection: 'column',
+    gap: 0,
+  },
+  mainChartCol: {
+    flex: 1.65,
+    minWidth: 0,
+  },
+  sideChartCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  breakdownCard: {
+    flex: 1,
+    marginBottom: spacing.lg,
+  },
+  chartPlaceholder: {
+    marginBottom: spacing.lg,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 18,
+  },
+  cardTitleBox: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  cardSubtitle: {
+    fontSize: 10.5,
+    color: colors.textMuted,
+    marginTop: 3,
+    fontWeight: '500',
+  },
+  cardTitleValue: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: -0.2,
+  },
+  typeLoading: {
+    gap: 14,
+    marginTop: 6,
+  },
+  typeRow: {
+    marginBottom: 15,
+  },
+  typeMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  typeLabel: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  typeValue: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  typeTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceElevated,
+    overflow: 'hidden',
+  },
+  typeFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 16,
+    marginBottom: spacing.lg,
+  },
+  bottomRowMobile: {
+    flexDirection: 'column',
+    gap: 0,
+  },
+  bottomCard: {
+    flex: 1,
+    minWidth: 0,
+    marginBottom: isDesktop ? 0 : spacing.lg,
+  },
+  cardEyebrow: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+    flexShrink: 1,
+  },
+  cardEyebrowValue: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 0.6,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  goalValue: {
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  goalCount: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  goalCountMuted: {
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  goalTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.surfaceElevated,
+    overflow: 'hidden',
+  },
+  goalFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  goalCaption: {
+    fontSize: 9.5,
+    color: colors.textMuted,
+    marginTop: 10,
+    fontWeight: '500',
+  },
+  perfRow: {
+    marginBottom: 14,
+  },
+  perfMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 5,
+  },
+  perfName: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: colors.text,
+    flex: 1,
+    marginRight: 8,
+  },
+  perfValue: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  perfTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceElevated,
+    overflow: 'hidden',
+  },
+  perfFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: colors.textMuted,
+  },
   bottomSpace: { height: 60 },
 });
