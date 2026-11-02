@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Velotrack - Sistema de Gestão Técnica</title>
+    <!-- Critical inline polyfills for browser ESM execution -->
+    <script>
+      window.global = window;
+      if (typeof process === 'undefined') {
+        window.process = { env: { NODE_ENV: 'development' } };
+      }
+      if (typeof window.require === 'undefined') {
+        window.require = function(moduleName) {
+          console.warn('[Web Polyfill] require("' + moduleName + '") called in browser context.');
+          return {};
+        };
+      }
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && (event.reason.message === 'Load failed' || String(event.reason).includes('Load failed'))) {
+          event.preventDefault();
+          console.warn('[Network] Load failed event caught gracefully:', event.reason);
+        }
+      });
+    </script>
+    <!-- Premium Google Fonts (display=optional: usa a fonte se já estiver em cache, sem pular/reflowar o texto) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=optional" rel="stylesheet">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #07080D;
+        color: #FFFFFF;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        min-height: 100vh;
+        background-color: #07080D;
+      }
+      /* Apply premium fonts globally on web elements */
+      input, button, select, textarea, div, span, p, h1, h2, h3, a {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
