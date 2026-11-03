@@ -515,7 +515,7 @@ export const servicosService = {
     clearQueryCache();
   },
 
-  finishService: async (id, data) => {
+finishService: async (id, data) => {
     const { error } = await supabase
       .from('servicos')
       .update({
@@ -524,7 +524,10 @@ export const servicosService = {
         tempo_fim: new Date().toISOString(),
       })
       .eq('id', id);
-    if (error) throw error;
+    if (error) {
+      console.error("finishService error:", error);
+      throw error;
+    }
 
     try {
       let userId = null;
@@ -536,7 +539,9 @@ export const servicosService = {
     } catch (e) {
       console.warn("Could not log finishService in history:", e);
     }
+
     clearQueryCache();
+    return { success: true, error: null };
   },
 
   updateChecklist: async (id, checklist) => {

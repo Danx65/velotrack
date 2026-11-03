@@ -137,7 +137,9 @@ export default function ServiceDetail() {
   const handleFinish = async () => {
     setUpdating(true);
     try {
-      await servicosService.finishService(id, { checklist, observations, fotos: photos });
+      const result = await servicosService.finishService(id, { checklist, observations, fotos: photos });
+      // Wait a moment and refetch to ensure data persistence
+      await fetchService();
       await historyService.log(id, user?.id, historyService.ACTIONS.FINISHED, 'Serviço finalizado');
       alert('Sucesso', 'Serviço finalizado com sucesso!');
       router.replace('/(tecnico)');
